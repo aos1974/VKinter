@@ -2,12 +2,8 @@ venv/*
 .idea/*
 *__pycache__*
 .gitattributes
-token/*
 *.code-workspace
 *.DS_Store
 Thumbs.db
-<<<<<<< HEAD
 /.vscode/
-=======
-/.vscode/
->>>>>>> 1640f9616c273e2b2e7948aca29e02c07f21766b
+
