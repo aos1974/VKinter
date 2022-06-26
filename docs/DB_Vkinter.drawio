@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-06-26T12:17:16.064Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.160 YaBrowser/22.5.2.615 Yowser/2.5 Safari/537.36" etag="q9qKnNd_4x3SrGRYqiCj" version="20.0.3" type="github">
+<mxfile host="app.diagrams.net" modified="2022-06-26T18:34:42.361Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.160 YaBrowser/22.5.2.615 Yowser/2.5 Safari/537.36" etag="XUauAWao1TJNg91W2tIT" version="20.0.3" type="github">
   <diagram id="2z1ISkz8Lt3HtBEaVeQ_" name="Page-1">
     <mxGraphModel dx="1038" dy="575" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -88,7 +88,7 @@
         <mxCell id="710zWWPVELSWgc5gnrYM-5" value="VK_ID INTEGER  UNIQ" style="text;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;fontStyle=1" vertex="1" parent="710zWWPVELSWgc5gnrYM-4">
           <mxGeometry y="30" width="180" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="710zWWPVELSWgc5gnrYM-6" value="access_token VCHAR(100)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" vertex="1" parent="710zWWPVELSWgc5gnrYM-4">
+        <mxCell id="710zWWPVELSWgc5gnrYM-6" value="access_token VCHAR(255)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" vertex="1" parent="710zWWPVELSWgc5gnrYM-4">
           <mxGeometry y="60" width="180" height="30" as="geometry" />
         </mxCell>
         <mxCell id="710zWWPVELSWgc5gnrYM-7" value="srch_offset INTEGER" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" vertex="1" parent="710zWWPVELSWgc5gnrYM-4">
