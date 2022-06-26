@@ -1,6 +1,6 @@
 ###########################
 # файл: dataclasses.py
-# version: 0.1.2
+# version: 0.1.4
 ###########################
 
 # Пол пользователя ВКонтакте
@@ -32,10 +32,24 @@ class VKUserData(object):
     settings : list
 
     #инициализация класса
-    def __init__(self):
+    def __init__(self, lst = []):
         super().__init__()
 
-        # инициализация данных "по умолчанию"
+        # если никакие аргументы не переданы
+        if len(lst) == 0:
+            # инициализация данных "по умолчанию"
+            self.set_default_attrs()
+        else:
+            # если заполнение из переданного списка было не корректным
+            if not self.set_attr_from_list(lst):
+                # то также заполняем параметрами "по умолчанию"
+                self.set_default_attrs()
+        # инициализируем дополниетльные параметры класса (settings)
+        self.set_default_settings()
+    # end __init__()
+
+    # функция заполнения атрибутов класса "по умолчанию"
+    def set_default_attrs(self):
         self.vk_id = -1
         self.first_name = ''
         self.last_name = ''
@@ -45,9 +59,31 @@ class VKUserData(object):
         self.city_title = ''
         self.vkdomain = ''
         self.last_visit = ''
-        self.settings = {'access_token' : '', 'srch_offset' : -1, 'age_from' : -1, 'age_to' : -1, 'last_command' : ''}
-    # end __init__()
+    # end set_default_attrs()
 
+    # функция заполнения "по умолчанию" дополнительных параметров (settings)
+    def set_default_settings(self):
+        self.settings = {'access_token' : '', 'srch_offset' : -1, 'age_from' : -1, 'age_to' : -1, 'last_command' : ''}
+    # end set_default_settings
+
+    # заполнение атрибутов класса (данные) из списка, по порядку
+    def set_attr_from_list(self, lst : list) -> bool:
+        # проверяем, что переданы все атрибуты (пока без settings)
+        if len(lst) != 9:
+            return False
+        # заполняем атрибуты класса из списка
+        self.vk_id = lst[0]
+        self.first_name = lst[1]
+        self.last_name = lst[2]
+        self.bdate = lst[3]
+        self.gender = lst[4]
+        self.city_id = lst[5]
+        self.city_title = lst[6]
+        self.vkdomain = lst[7]
+        self.last_visit = lst[8]
+        return True
+    # end set_attr_from_list()
+        
     # вывод данных о пользователе в формате json
     def json():
         pass

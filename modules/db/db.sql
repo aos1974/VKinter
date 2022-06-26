@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS last_search (
 
 CREATE TABLE IF NOT EXISTS settings (
 	vk_id INTEGER NOT NULL UNIQUE,
-	access_token VARCHAR (100),
+	access_token VARCHAR (255),
 	srch_offset INTEGER,
 	age_from INTEGER,
 	age_to INTEGER,
