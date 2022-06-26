@@ -2,3 +2,4 @@ sql~=2022.4.0
 SQLAlchemy~=1.4.39
 pymysql
 vk_api
+psycopg2

@@ -1,19 +1,22 @@
 ###########################
 # файл: databases.py
-# version: 0.1.1
+# version: 0.1.3
 ###########################
-
-import dataclasses
-from xmlrpc.client import Boolean
-
+import psycopg2
+import sqlalchemy
 from modules.db.dataclasses import VKUserData
+
+# Глобальный переменные и классы модуля
+POSTGRES_DB = 'postgresql://vkdbadmin:vk2022boT!!!@172.18.89.161:5432/vkusers'
 
 # класс для взаимодействия с базой данных
 class DataBase(object):
 
     # функция инициализации класса
-    def __init__(self):
-        pass
+    def __init__(self, db : str):
+        self.db = db
+        self.engine = sqlalchemy.create_engine(self.db)
+        self.connection = self.engine.connect()
     # end __init__()
 
     # функция получения данных пользователя ВКонтакте из базы данных
