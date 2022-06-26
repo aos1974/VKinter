@@ -1,6 +1,6 @@
 ###########################
-# файл: dataclass.py
-# version: 0.1.1
+# файл: dataclasses.py
+# version: 0.1.2
 ###########################
 
 # Пол пользователя ВКонтакте
@@ -45,7 +45,7 @@ class VKUserData(object):
         self.city_title = ''
         self.vkdomain = ''
         self.last_visit = ''
-        self.settings = {'access_token' : '', 'srch_offset' : -1}
+        self.settings = {'access_token' : '', 'srch_offset' : -1, 'age_from' : -1, 'age_to' : -1, 'last_command' : ''}
     # end __init__()
 
     # вывод данных о пользователе в формате json
