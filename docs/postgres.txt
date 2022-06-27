@@ -1,2 +1,4 @@
 создание пользователей и БД
 https://www.dmosk.ru/miniinstruktions.php?mini=postgresql-users
+дата и время
+https://postgrespro.ru/docs/postgresql/9.5/datatype-datetime
