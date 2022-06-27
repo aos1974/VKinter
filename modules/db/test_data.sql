@@ -18,4 +18,8 @@ INSERT INTO u420606_vkinder.vk_users (vk_id,first_name,last_name,bdate,gender,ci
 INSERT INTO vk_users (vk_id,first_name,last_name,bdate,gender,city_id,city_title,vkdomain,last_visit) VALUES
 	(37584229,'Елизавета','Титаренко','29.6.1999',1,222,'Казань','https://vk.com/id695117549',NULL);
 
+# добавление данных в таблицу settings (дополнительные свойства пользователя)
+INSERT INTO settings (vk_id,access_token,srch_offset,age_from,age_to,last_command) VALUES
+	 (695117549,'',-1,22,23,NULL);
+
 

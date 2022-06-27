@@ -1,12 +1,14 @@
 ###########################
 # файл: dataclasses.py
-# version: 0.1.5
+# version: 0.1.7
 ###########################
 
 from datetime import datetime
 
 # id "по умолчания" (т.е. не определенный) при создании класса
 VK_ID_NOTDEFINED = -1
+# settings.srch_offcet - текущая позиция в списке поиска по запросу не задана "по умолчанию"
+OFFSET_NOTDEFINED = -1
 
 # Пол пользователя ВКонтакте
 VK_MALE = 2
@@ -71,13 +73,14 @@ class VKUserData(object):
         self.vkdomain = ''
         self.last_visit = ''
         dt = datetime.now()
-        self.last_visit = dt.strftime('%Y-%M-%D %H:%M:%S')
+        self.last_visit = dt.strftime('%Y-%m-%d %H:%M:%S')
     # end set_default_attrs()
 
     # функция заполнения "по умолчанию" дополнительных параметров (settings)
     def set_default_settings(self):
-        self.settings = {'access_token' : '', 'srch_offset' : -1, 'age_from' : -1, 'age_to' : -1, 'last_command' : ''}
-    # end set_default_settings
+        self.settings = {'access_token' : '', 'srch_offset' : OFFSET_NOTDEFINED, 'age_from' : -1, 
+                         'age_to' : -1, 'last_command' : ''}
+    # end set_default_settings()
 
     # заполнение атрибутов класса (данные) из списка, по порядку
     def set_attr_from_list(self, lst : list) -> bool:
@@ -122,10 +125,17 @@ class VKUserData(object):
         dt = datetime.now()
         self.last_visit = dt.strftime('%Y-%m-%d %H:%M:%S')
         return True
-    # end set_attr_from_dict
+    # end set_attr_from_dict()
         
-    # вывод данных о пользователе в формате json
-    def json():
-        pass
+    # функция заполнения дополнительных параметров (settings) из списка
+    def set_settings_from_list(self, lst : list):
+        # если передан полный список ,то заполняем дополнительные свойства
+        if len(lst) == 5:
+            self.settings['access_token'] = lst[0]
+            self.settings['srch_offset'] = lst[1]
+            self.settings['age_from'] = lst[2]
+            self.settings['age_to'] = lst[3]
+            self.settings['last_command'] = lst[4]
+    # end set_settings_from_list()
 
 # end class VKUserData

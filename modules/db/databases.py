@@ -1,6 +1,6 @@
 ###########################
 # файл: databases.py
-# version: 0.1.5
+# version: 0.1.7
 ###########################
 
 import psycopg2
@@ -38,6 +38,7 @@ class DataBase(object):
     # get_vkuser()
 
     # функция сохранения данных о пользователе ВКонтакте в базу данных
+    # возвращае True, если данные сохранены в базе данных, иначе False
     def new_vkuser(self, vk_user : VKUserData) -> bool:
         sql = f"""
         SELECT * FROM vk_users WHERE vk_id={vk_user.vk_id};
@@ -48,7 +49,7 @@ class DataBase(object):
             # нет такого пользователя в базе данных
             sql = f"""
             INSERT INTO vk_users (vk_id,first_name,last_name,bdate,gender,city_id,city_title,vkdomain,last_visit) 
-            VALUES ({vk_user.vk_id},{vk_user.first_name},{vk_user.last_name},{vk_user.bdate},{vk_user.gender},{vk_user.city_id},{vk_user.city_title},{vk_user.vkdomain},{vk_user.last_visit});
+            VALUES ({vk_user.vk_id},'{vk_user.first_name}','{vk_user.last_name}','{vk_user.bdate}',{vk_user.gender},{vk_user.city_id},'{vk_user.city_title}','{vk_user.vkdomain}','{vk_user.last_visit}');
             """
         else:
             # пользователь уже существует в базе данных
@@ -99,9 +100,23 @@ class DataBase(object):
     def del_black_list(self, vk_id : int) -> bool:
         pass
 
-    # 
+    # считать дополнительные данные о пользователе из базы данных
     def get_setings(self, vk_user: VKUserData) -> bool:
-        pass
+        sql = f"""
+        SELECT * FROM settings WHERE vk_id={vk_user.vk_id};
+        """
+        result = self.connection.execute(sql).fetchone()
+        # если запрос выполнился успешно
+        if result is not None:
+            # заполняем и возвращаем объект VKUserData
+            # нулевой элемент списка это vk_id из таблицы bd.search
+            vk_user.set_settings_from_list(list(result)[1:])
+        else: 
+            # если запрос к базе данных ничего не вернул
+            vk_user.set_default_settings()
+            return False
+        return True
+    # end get_setings()
 
     #
     def update_settings(self, vk_user: VKUserData) -> bool:
