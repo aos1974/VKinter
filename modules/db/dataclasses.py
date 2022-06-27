@@ -5,6 +5,9 @@
 
 from datetime import datetime
 
+# id "по умолчания" (т.е. не определенный) при создании класса
+VK_ID_NOTDEFINED = -1
+
 # Пол пользователя ВКонтакте
 VK_MALE = 2
 VK_FEMALE = 1
@@ -34,25 +37,31 @@ class VKUserData(object):
     settings : list
 
     #инициализация класса
-    def __init__(self, lst = []):
+    def __init__(self, *vk_data):
         super().__init__()
 
         # если никакие аргументы не переданы
-        if len(lst) == 0:
+        if len(vk_data) == 0:
             # инициализация данных "по умолчанию"
             self.set_default_attrs()
         else:
-            # если заполнение из переданного списка было не корректным
-            if not self.set_attr_from_list(lst):
-                # то также заполняем параметрами "по умолчанию"
-                self.set_default_attrs()
+            if type(vk_data[0]) is list:
+                # если заполнение из переданного списка было не корректным
+                if not self.set_attr_from_list(vk_data[0]):
+                    # то также заполняем параметрами "по умолчанию"
+                    self.set_default_attrs()    
+            elif type(vk_data[0]) is dict:
+                if not self.set_attr_from_dict(vk_data[0]):
+                    # то также заполняем параметрами "по умолчанию"
+                    self.set_default_attrs()        
+            
         # инициализируем дополниетльные параметры класса (settings)
         self.set_default_settings()
     # end __init__()
 
     # функция заполнения атрибутов класса "по умолчанию"
     def set_default_attrs(self):
-        self.vk_id = -1
+        self.vk_id = VK_ID_NOTDEFINED
         self.first_name = ''
         self.last_name = ''
         self.bdate = ''
@@ -86,7 +95,7 @@ class VKUserData(object):
         self.vkdomain = lst[7]
         self.last_visit = lst[8]
         dt = datetime.now()
-        self.last_visit = dt.strftime('%Y-%M-%D %H:%M:%S')
+        self.last_visit = dt.strftime('%Y-%m-%d %H:%M:%S')
         return True
     # end set_attr_from_list()
     
@@ -111,7 +120,8 @@ class VKUserData(object):
         if 'screen_name' in vk_dict.keys():
             self.vkdomain = vk_dict.get('screen_name')
         dt = datetime.now()
-        self.last_visit = dt.strftime('%Y-%M-%D %H:%M:%S')
+        self.last_visit = dt.strftime('%Y-%m-%d %H:%M:%S')
+        return True
     # end set_attr_from_dict
         
     # вывод данных о пользователе в формате json

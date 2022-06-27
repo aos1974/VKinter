@@ -1,6 +1,6 @@
 ###########################
 # файл: databases.py
-# version: 0.1.4
+# version: 0.1.5
 ###########################
 
 import psycopg2
@@ -39,7 +39,29 @@ class DataBase(object):
 
     # функция сохранения данных о пользователе ВКонтакте в базу данных
     def new_vkuser(self, vk_user : VKUserData) -> bool:
-        pass
+        sql = f"""
+        SELECT * FROM vk_users WHERE vk_id={vk_user.vk_id};
+        """
+        result = self.connection.execute(sql).fetchone()
+        # если запрос выполнился успешно
+        if result is None:
+            # нет такого пользователя в базе данных
+            sql = f"""
+            INSERT INTO vk_users (vk_id,first_name,last_name,bdate,gender,city_id,city_title,vkdomain,last_visit) 
+            VALUES ({vk_user.vk_id},{vk_user.first_name},{vk_user.last_name},{vk_user.bdate},{vk_user.gender},{vk_user.city_id},{vk_user.city_title},{vk_user.vkdomain},{vk_user.last_visit});
+            """
+        else:
+            # пользователь уже существует в базе данных
+            sql = f"""
+            UPDATE vk_users SET last_visit = '{vk_user.last_visit}' WHERE vk_id = {vk_user.vk_id};
+            """
+        result = self.connection.execute(sql)
+        # если запрос выполнился с ошибкой
+        if result is None:
+            return False
+        # успешный результат
+        return True
+    # enf new_vk_user
 
     # удалить пользователя ВКонтакте в базе данных
     def del_vkuser(self, vk_id : int) -> bool:
