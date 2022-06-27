@@ -62,7 +62,7 @@ class Logic(object):
         return next_id
     # get_next_search_id()
 
-    def get_next_user(self, vk_id : int) -> int:
+    def get_next_user(self, user_id : int) -> int:
         position = self.db.move_offset(user_id, 1)
         id = self.db.get_user(user_id, position)
         return id

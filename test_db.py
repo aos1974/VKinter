@@ -44,4 +44,7 @@ vk_id = 695117549
 vk_user = vk_logic.get_vk_user(vk_id)
 print(vk_user.vk_id, vk_user.first_name, vk_user.last_name, vk_user.settings.get('srch_offset'))
 
+# Бизнес-логика: добавление поискового списка
+srch_list = [695117551, 695117555, 695107558, 695107560, 695108562, 695108463, 695108464]
+srch_list2 = [595108464, 595108463, 595108462, 595108461, 595108460, 595108459, 595108458]
 

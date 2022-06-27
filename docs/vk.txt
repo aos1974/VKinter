@@ -1,0 +1,6 @@
+https://dev.vk.com/method/users.get
+https://dev.vk.com/reference/objects/user#sex
+https://dev.vk.com/api/access-token/authcode-flow-user
+
+НАШ БОТ
+https://vk.com/im?sel=-214168760
