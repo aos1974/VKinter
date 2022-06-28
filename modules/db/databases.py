@@ -1,6 +1,6 @@
 ###########################
 # файл: databases.py
-# version: 0.1.8
+# version: 0.1.10
 ###########################
 
 import sqlalchemy
@@ -104,14 +104,14 @@ class DataBase(object):
     # получить список избранных контактов
     def get_favorites(self, vk_id : int) -> list:
         sql = f"""
-            SELECT * FROM favorites WHERE vk_id={vk_id};
+            SELECT fav_id FROM favorites WHERE vk_id={vk_id};
             """
         result = self.connection.execute(sql).fetchall()
         # если записей нет, то возвращаем пустой список
         if result is None or len(result) == 0:
             return list()
-        # разбиваем список из пары vk_id, fav_id и получаем list(fav_id)
-        return list(zip(*list(result)))[1]
+        # возвращаем список fav_id
+        return list(zip(*list(result)))[0]
     # end get_favorites()
 
     # удалить избранный контакт у пользовалетя из базы данных
@@ -125,14 +125,14 @@ class DataBase(object):
     # получить список заблокированных контактов
     def get_black_list(self, vk_id: int) -> list:
         sql = f"""
-            SELECT * FROM black_list WHERE vk_id={vk_id};
+            SELECT blk_id FROM black_list WHERE vk_id={vk_id};
             """
         result = self.connection.execute(sql).fetchall()
         # если записей нет, то возвращаем пустой список
         if result is None or len(result) == 0:
             return list()
         # разбиваем список из пары vk_id, fav_id и получаем list(fav_id)
-        return list(zip(*list(result)))[1]
+        return list(zip(*list(result)))[0]
     # end get_black_list()
 
     # # сохранить заблокированный контакт
@@ -177,29 +177,6 @@ class DataBase(object):
             return False
         return True
     # end get_setings()
-    
-    # считать дополнительные данные о пользователе из базы данных
-    def get_setings_smart(self, vk_user: VKUserData) -> bool:
-        result = self.get_setings(vk_user)
-
-        # если запрос выполнился успешно
-        if result is not None:
-            # заполняем и возвращаем объект VKUserData
-            # нулевой элемент списка это vk_id из таблицы bd.search
-            vk_user.set_settings_from_list(list(result)[1:])
-        else:
-            # если запрос к базе данных ничего не вернул
-            vk_user.set_default_settings()
-            #Важно создать исходную настройку, чтобы потом делать UPDATE
-            self.set_setings( vk_user.vk_id,
-                              vk_user.settings.get('access_token'),
-                              vk_user.settings.get('srch_offset'),
-                              vk_user.settings.get('age_from'),
-                              vk_user.settings.get('age_to'),
-                              vk_user.settings.get('last_command'))
-            # return False
-        # return True
-        return vk_user
 
     def get_user(self, user_id, rch_number):
         sql = f"""
@@ -208,19 +185,25 @@ class DataBase(object):
         result = self.connection.execute(sql).fetchone()
         return result
 
-    def set_setings(self, user_id, access_token='', srch_offset=0, age_from=20, age_to=50, last_command=''):
+    # сохранение дополнительных параметров пользователя в базе данных
+    def set_setings(self, vk_user: VKUserData) -> bool:
         sql = f"""
         INSERT INTO settings(vk_id, access_token, srch_offset, age_from, age_to, last_command) 
-        VALUES ('{user_id}','{access_token}','{srch_offset}','{age_from}','{age_to}','{last_command}');
+        VALUES ('{vk_user.vk_id}','{vk_user.settings.get('access_token')}','{vk_user.settings.get('srch_offset')}','
+        {vk_user.settings.get('age_from')}','{vk_user.settings.get('age_to')}','{vk_user.settings.get('last_command')}');
                """
-        self.connection.execute(sql)
+        result = self.connection.execute(sql)
+        return True
 
-    def upd_setings(self, user_id, access_token='', srch_offset=0, age_from=20, age_to=50, last_command=''):
+    # обновить данные параметров пользователя в базе данных
+    def upd_setings(self, vk_user: VKUserData) -> bool:
 
         sql = f"""
-        UPDATE settings SET srch_offset = '{srch_offset}' where vk_id={user_id};
+        UPDATE settings SET srch_offset = '{vk_user.srch_offset}', access_token = '{vk_user.access_token}',
+        age_from = '{vk_user.age_from}',age_to = '{vk_user.age_to}', last_command = '{vk_user.last_command}' 
+        WHERE vk_id={vk_user.vk_id};
                """
-        res = self.connection.execute(sql)
-
+        result = self.connection.execute(sql)
+        return True
 
 

@@ -1,6 +1,6 @@
 ###########################
 # файл: logic.py
-# version: 0.1.8
+# version: 0.1.10
 ###########################
 
 from pprint import pprint
@@ -78,7 +78,8 @@ class Logic(object):
 
     def get_settings(self, user_id: int):
         vkUser = VKUserData(self.api.get_info(user_id))
-        self.position = self.db.get_setings_smart(vkUser).settings['srch_offset']
+        self.get_setings_smart(vkUser)
+        self.position = vkUser.settings['srch_offset']
 
     def set_settings(self, user_id: int):
         self.db.set_setings(user_id=user_id,srch_offset=self.position)
@@ -97,3 +98,16 @@ class Logic(object):
             user_id = None
             print(f'ERROR EVENT {event}')
         return user_id
+
+    # считать дополнительные данные о пользователе из базы данных
+    def get_setings_smart(self, vk_user: VKUserData) -> bool:
+        
+        if not self.db.get_setings(vk_user):
+            # если запрос к базе данных ничего не вернул
+            vk_user.set_default_settings()
+            # сохраняем исходные данные в базе данных
+            self.db.set_setings(vk_user)
+
+        return True
+        # return vk_user
+    # end get_setings_smart()
