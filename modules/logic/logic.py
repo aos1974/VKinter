@@ -107,7 +107,5 @@ class Logic(object):
             vk_user.set_default_settings()
             # сохраняем исходные данные в базе данных
             self.db.set_setings(vk_user)
-
         return True
-        # return vk_user
     # end get_setings_smart()
