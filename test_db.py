@@ -1,6 +1,6 @@
 ###########################
 # файл: test.py
-# version: 0.1.7
+# version: 0.1.8
 ###########################
 
 #
@@ -14,11 +14,11 @@ import modules.db.dataclasses as datacls
 import modules.db.databases as dbs
 
 # инициализация БД
-vk_db = DataBase(dbs.POSTGRES_DB)
-#vk_db = DataBase(utils.get_token('db_connection'))
+#vk_db = DataBase(dbs.POSTGRES_DB)
+vk_db = DataBase(utils.get_token('db_connection'))
 
 # инициализация подсистемы "Бизнес логики"
-vk_logic = Logic(vk_db)
+vk_logic = Logic(vk_db, None)
 
 # тест запрос к БД на получение данных о пользователе
 vk_id = 37584229
@@ -48,3 +48,16 @@ print(vk_user.vk_id, vk_user.first_name, vk_user.last_name, vk_user.settings.get
 srch_list = [695117551, 695117555, 695107558, 695107560, 695108562, 695108463, 695108464]
 srch_list2 = [595108464, 595108463, 595108462, 595108461, 595108460, 595108459, 595108458]
 
+# тест записи в избранное
+for lst in srch_list:
+    print(vk_db.new_favorite(vk_user.vk_id, lst))
+    
+# тест чтения избранного
+print(vk_db.get_favorites(vk_user.vk_id))
+
+# тест записи в блэк лист
+for lst in srch_list2:
+    print(vk_db.new_black_id(vk_user.vk_id, lst))
+    
+# тест чтения избранного
+print(vk_db.get_black_list(vk_user.vk_id))

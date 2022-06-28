@@ -1,6 +1,6 @@
 ###########################
 # файл: dataclasses.py
-# version: 0.1.7
+# version: 0.1.8
 ###########################
 
 from datetime import datetime
@@ -8,7 +8,7 @@ from datetime import datetime
 # id "по умолчания" (т.е. не определенный) при создании класса
 VK_ID_NOTDEFINED = -1
 # settings.srch_offcet - текущая позиция в списке поиска по запросу не задана "по умолчанию"
-OFFSET_NOTDEFINED = -1
+OFFSET_NOTDEFINED = 0
 
 # Пол пользователя ВКонтакте
 VK_MALE = 2
@@ -38,7 +38,7 @@ class VKUserData(object):
     # дополнительные свойства пользователя ВКонтакте
     settings : list
 
-    #инициализация класса
+    # инициализация класса
     def __init__(self, *vk_data):
         super().__init__()
 
