@@ -1,12 +1,10 @@
 ###########################
 # файл: logic.py
-# version: 0.1.10
+# version: 0.1.11
 ###########################
-
-from pprint import pprint
 from modules.db.databases import DataBase
 from vk_api.bot_longpoll import VkBotEventType
-from modules.db.dataclasses import OFFSET_NOTDEFINED, VK_ID_NOTDEFINED, VKUserData
+from modules.db.dataclasses import VK_ID_NOTDEFINED, VKUserData
 
 class Logic(object):
 
@@ -14,7 +12,7 @@ class Logic(object):
     def __init__(self, db: DataBase, api):
         self.db = db
         self.api = api
-        self.position = 0
+        self.vkUser = VKUserData()
     # end __init__()
 
     # функция обновления информации о пользователе начавшем диалог с ВКБотом
@@ -40,54 +38,95 @@ class Logic(object):
             # считываем дополнительные настройки пользователя из базы данных
             self.db.get_setings(vk_user)
         return vk_user
-    # end get_vk_user()
 
-    def update_search_list(self, user_id):
-        count = 5 #Размер пакета данных
-        offset = self.position + 1
-        position = self.position
-        list = self.api.search(user_id, offset, count)
-        self.db.insert_last_search(user_id, list, position)
+    def get_list(self, content, _list):
+        for l in _list:
+            content += f'{self.api.get_user_data(l)[1]}'
+        return content
+    
+    def run_comand(self, comand):
+        content = ''
+        key = comand.get('key')
+        if not key is None and key != 'none':
+            print(f'Запустить команду {key}')
+            if key == 'next':
+                [comand['attachment'], content] = self.get_next_user()
+            elif key == 'previous':
+                [comand['attachment'], content] = self.get_previous_user()
+            elif key == 'search':
+                [comand['attachment'], content] = self.get_next_user()
+            elif key == 'black_list':
+                content = self.get_list(content, self.db.get_black_list(self.vkUser.vk_id))
+            elif key == 'favorites':
+                content = self.get_list(content, self.db.get_black_list(self.vkUser.vk_id))
+        comand['content'] = content
+        return comand
+
+    def update_search_list(self):
+        count = 10 #Размер пакета данных
+        position = self.vkUser.settings.get('srch_offset')
+        offset = position + 1
+        list = self.api.search(self.vkUser, offset, count)
+        self.db.insert_last_search(self.vkUser.vk_id, list, position)
 
     def get_user(self, user_id):
-        user = self.db.get_user(user_id, self.position)
+        print(self.vkUser.settings['srch_offset'])
+        user = self.db.get_user(user_id, self.vkUser.settings['srch_offset'])
         if user is None:
-            self.update_search_list(user_id)
-            user = self.db.get_user(user_id, self.position)
-        return user[0]
+            self.update_search_list()
+            user = self.db.get_user(user_id, self.vkUser.settings['srch_offset'])
+        print(self.vkUser.settings['srch_offset'])
+        if user is None:
+            return None
+        else:
+            return user[0]
 
     #Следующий обрабатываемый пользователь
-    def get_next_user(self, user_id):
-        self.position += 1
-        return self.api.get_user_data(self.get_user(user_id))
+    def get_next_user(self):
+        self.vkUser.settings['srch_offset'] += 1
+
+        id = self.get_user(self.vkUser.vk_id)
+
+        if id is None:
+            return self.get_next_user()
+        else:
+            if  self.db.is_black(self.vkUser.vk_id, id) == True:
+                return self.get_next_user()
+            else:
+                return self.api.get_user_data(id)
 
     #Предыдущий обрабатываемый пользователь
-    def get_previous_user(self, user_id):
-        self.position += -1
-        return self.api.get_user_data(self.get_user(user_id))
+    def get_previous_user(self):
+        self.vkUser.settings['srch_offset'] -= 1
+        if self.vkUser.settings.get('srch_offset') > 1:
+            id = self.get_user(self.vkUser.vk_id)
+            print(id)
+            if id is None:
+                return self.get_previous_user()
+            else:
+                if self.db.is_black(self.vkUser.vk_id, id) == True:
+                    return self.get_previous_user()
+                else:
+                    return self.api.get_user_data(id)
+        else:
+            return [None, "не существует"]
 
-    #Текущий обрабатываемый пользователь
-    def get_current_user(self, user_id):
-        return self.api.get_user_data(self.get_user(user_id))
+    # функция получения дополнительных настроек пользователя
+    def get_settings(self, vk_instance):
+        # если параметр это id пользователя
+        if type(vk) is int:
+            self.vkUser.vk_id = vk_instance
+        # если параметр это объект VKUserData
+        elif type(vk) is VKUserData:
+            self.vkUser.copy(vk_instance)
+        self.get_setings_smart(self.vkUser)
+    # end get_settings
 
-    #получить список избранных контактов
-    def get_favorites(self, vk_id : int) -> list:
-        pass
-        favorites = [1000, 1001]
-        return favorites
+    def upd_settings(self):
+        self.db.upd_setings(self.vkUser)
 
-    def get_settings(self, user_id: int):
-        vkUser = VKUserData(self.api.get_info(user_id))
-        self.get_setings_smart(vkUser)
-        self.position = vkUser.settings['srch_offset']
-
-    def set_settings(self, user_id: int):
-        self.db.set_setings(user_id=user_id,srch_offset=self.position)
-
-    def upd_settings(self, user_id: int):
-        self.db.upd_setings(user_id=user_id, srch_offset=self.position)
-
-    def get_user_id(self, event):
+    @staticmethod
+    def get_user_id(event):
         if  event.type == VkBotEventType.MESSAGE_NEW:
             user_id = event.obj.message['from_id']
         elif event.type == VkBotEventType.MESSAGE_EVENT:
@@ -99,13 +138,22 @@ class Logic(object):
             print(f'ERROR EVENT {event}')
         return user_id
 
+    @staticmethod
+    def get_command_text(event):
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            return event.obj.message['text']
+        elif event.type == VkBotEventType.MESSAGE_EVENT:
+            return event.object.payload.get('type')
+        elif event.type == VkBotEventType.MESSAGE_REPLY:
+            return None
+        else:
+            print(f'ERROR EVENT {event}')
+            return None
+
     # считать дополнительные данные о пользователе из базы данных
-    def get_setings_smart(self, vk_user: VKUserData) -> bool:
-        
+    def get_setings_smart(self, vk_user: VKUserData):
         if not self.db.get_setings(vk_user):
             # если запрос к базе данных ничего не вернул
             vk_user.set_default_settings()
             # сохраняем исходные данные в базе данных
             self.db.set_setings(vk_user)
-        return True
-    # end get_setings_smart()

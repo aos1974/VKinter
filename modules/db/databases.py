@@ -1,6 +1,6 @@
 ###########################
 # файл: databases.py
-# version: 0.1.10
+# version: 0.1.11
 ###########################
 
 import sqlalchemy
@@ -38,15 +38,25 @@ class DataBase(object):
 
     # get_vkuser()
 
+    # функция проверки, есть ли пользователь в базе данных
+    def id_in_database(self, vk_id: int) -> bool:
+        
+        sql = f"""
+            SELECT * FROM vk_users WHERE vk_id={vk_id};
+            """
+        result = self.connection.execute(sql).fetchone()
+        # если данных нет
+        if result is None:
+            return False 
+        # есд\ли данные есть     
+        return True
+    # end 
+
     # функция сохранения данных о пользователе ВКонтакте в базу данных
     # возвращае True, если данные сохранены в базе данных, иначе False
     def new_vkuser(self, vk_user: VKUserData) -> bool:
-        sql = f"""
-            SELECT * FROM vk_users WHERE vk_id={vk_user.vk_id};
-            """
-        result = self.connection.execute(sql).fetchone()
-        # если запрос выполнился успешно
-        if result is None:
+        
+        if not self.id_in_database(vk_user.vk_id):
             # нет такого пользователя в базе данных
             sql = f"""
                 INSERT INTO vk_users (vk_id,first_name,last_name,bdate,gender,city_id,city_title,vkdomain,last_visit) 
@@ -160,6 +170,17 @@ class DataBase(object):
     def del_black_list(self, vk_id: int) -> bool:
         pass
 
+    def is_black(self, vk_id: int, blk_id: int) -> bool:
+        sql = f"""
+              SELECT * FROM black_list WHERE vk_id={vk_id} AND blk_id={blk_id} ;
+              """
+        result = self.connection.execute(sql).fetchone()
+        print(result)
+        if result is None:
+            return False
+        else:
+            return True
+
     # считать дополнительные данные о пользователе из базы данных
     def get_setings(self, vk_user: VKUserData) -> bool:
         sql = f"""
@@ -176,7 +197,6 @@ class DataBase(object):
             vk_user.set_default_settings()
             return False
         return True
-    # end get_setings()
 
     def get_user(self, user_id, rch_number):
         sql = f"""
@@ -199,8 +219,8 @@ class DataBase(object):
     def upd_setings(self, vk_user: VKUserData) -> bool:
 
         sql = f"""
-        UPDATE settings SET srch_offset = '{vk_user.srch_offset}', access_token = '{vk_user.access_token}',
-        age_from = '{vk_user.age_from}',age_to = '{vk_user.age_to}', last_command = '{vk_user.last_command}' 
+        UPDATE settings SET srch_offset = '{vk_user.settings['srch_offset']}', access_token = '{vk_user.settings['access_token']}',
+        age_from = '{vk_user.settings['age_from']}',age_to = '{vk_user.settings['age_to']}', last_command = '{vk_user.settings['last_command']}' 
         WHERE vk_id={vk_user.vk_id};
                """
         result = self.connection.execute(sql)

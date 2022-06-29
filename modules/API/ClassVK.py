@@ -1,6 +1,11 @@
-from pprint import pprint
+###########################
+# файл: ClassVK.py
+# version: 0.1.11
+###########################
 
+from pprint import pprint
 import requests
+from modules.db.dataclasses import VKUserData
 
 
 class ClassVK(object):
@@ -9,6 +14,7 @@ class ClassVK(object):
     def __init__(self, access_token=None):
         self.access_token = access_token
         # self.offset = 0 #Сдвиг для поиска
+        
     @staticmethod
     def sex_invert(sex):
         if sex == 1:
@@ -19,46 +25,53 @@ class ClassVK(object):
             sex = 0
         return sex
 
-    def search(self, user_id, offset, count):
-        params = self.get_info(user_id)
-        search_list = self.users_search(params, count=count, offset=offset)
-        pprint(search_list)
+    def search(self, vk_user: VKUserData, offset, count):
+        params = self.get_info(vk_user.vk_id)
+        search_list = self.users_search(vk_user, params, count=count, offset=offset)
+        # pprint(search_list)
         return search_list
+    
     def get_user_data(self, id):
         attachments = []
         content = ''
         if id != 0:
             params = self.get_info(id)
-            content = f'\n{params.get("first_name")} {params.get("last_name")}'
-            self.get_info(id)  # Параметры пользователя
+            # pprint(params)
+            if params:
+                content = f'\n{params.get("first_name")} {params.get("last_name")} https://vk.com/id{id}'
+                self.get_info(id)  # Параметры пользователя
 
-            photos = self.photos_get(id, 3)
-            if photos.get('response') is not None:
-                items = photos['response']['items']
-                for item in items:
+                photos = self.photos_get(id, 3)
+                if photos.get('response') is not None:
+                    items = photos['response']['items']
+                    for item in items:
                         attachments.append(f'photo{id}_{item.get("id")}')
-        pprint(','.join(attachments))
         return [','.join(attachments), content]
 
-    def users_search(self, params_data, count=1, offset=0):
+    def users_search(self, vk_user: VKUserData, params_data, count=1, offset=0):
         method = 'users.search'
         url = self.API_URL + method
-        params = {
-            'count': count,
-            'city': params_data.get("city").get("id"),
-            'offset': offset,
-            'sex': self.sex_invert(params_data.get("sex")),
-            'access_token': self.access_token,
-            'v': '5.131'
-        }
+        access_token = vk_user.settings['access_token']
+        if params_data.get("city"):
+            city = params_data.get("city").get("id")
+        if not access_token:
+            access_token = self.access_token
+        params = dict(count=count, city=city, offset=offset,
+                      age_from=vk_user.settings['age_from'], age_to=vk_user.settings['age_to'],
+                      sex=self.sex_invert(params_data.get("sex")), access_token=access_token, v='5.131', has_photo=1, status=6, sort=0)
+
+        # pprint(params)
         res = requests.get(url, params=params)
         response = res.json().get("response")
         ids = []
         for r in response.get('items'):
-            ids.append(r.get("id"))
+            if r.get("can_access_closed"):
+                # print(r)
+                ids.append(r.get("id"))
         return ids
 
     def get_info(self, user_ids):
+        # print(user_ids)
         method = 'users.get'
         url = self.API_URL + method
         params = {
@@ -69,39 +82,11 @@ class ClassVK(object):
         }
         res = requests.get(url, params=params)
         response = res.json().get("response")
-        print(response)
-        for r in response:
-            res = r
-            break
-        # print(res)
-        return res
-
-    # def get_id(self, user_ids):
-    #     method = 'users.get'
-    #     url = self.API_URL + method
-    #     params = {
-    #         'user_ids': user_ids,
-    #         'access_token': self.access_token,
-    #         'v': '5.131'
-    #     }
-    #     res = requests.get(url, params=params)
-    #     response = res.json().get("response")
-    #     _id = 0
-    #     print(response)
-    #     for r in response:
-    #         _id = r.get("id")
-    #         break
-    #     return _id
-
-    # @staticmethod
-    # def get_max_url(item):
-    #     max_height = -1
-    #     res = ""
-    #     for s in item['sizes']:
-    #         if s['height'] > max_height:
-    #             max_height = s['height']
-    #             res = s['url']
-    #     return res
+        # print(response)
+        if response:
+            return response[0]
+        else:
+            return None
 
     def photos_get(self, owner_id: str, count=3):
         method = 'photos.get'

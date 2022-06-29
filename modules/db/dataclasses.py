@@ -1,6 +1,6 @@
 ###########################
 # файл: dataclasses.py
-# version: 0.1.9
+# version: 0.1.11
 ###########################
 
 from datetime import datetime
@@ -81,8 +81,18 @@ class VKUserData(object):
 
     # функция заполнения "по умолчанию" дополнительных параметров (settings)
     def set_default_settings(self):
-        self.settings = {'access_token' : '', 'srch_offset' : OFFSET_NOTDEFINED, 'age_from' : AGE_FROM_DEFAULT, 
-                         'age_to' : AGE_TO_DEFAULT, 'last_command' : ''}
+        # если у пользователя указана дата рождения то устанавливаем границы поиска по ней
+        if len(self.bdate) > 0:
+            bdate = datetime.strptime(self.bdate, '%d.%m.%Y')
+            age_from = datetime.now() - bdate
+            age_from = age_from.days // 365
+            age_to = age_from + 1
+        else:
+            # иначе используем значения по умолчанию
+            age_from = AGE_FROM_DEFAULT
+            age_to = AGE_TO_DEFAULT
+            
+        self.settings = {'access_token' : '', 'srch_offset' : OFFSET_NOTDEFINED, 'age_from' : age_from, 'age_to' : age_to, 'last_command' : ''}
     # end set_default_settings()
 
     # заполнение атрибутов класса (данные) из списка, по порядку
