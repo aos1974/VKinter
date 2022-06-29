@@ -1,9 +1,10 @@
 ###########################
 # файл: dataclasses.py
-# version: 0.1.11
+# version: 0.1.12
 ###########################
 
 from datetime import datetime
+from unittest import result
 
 # id "по умолчания" (т.е. не определенный) при создании класса
 VK_ID_NOTDEFINED = -1
@@ -95,6 +96,12 @@ class VKUserData(object):
         self.settings = {'access_token' : '', 'srch_offset' : OFFSET_NOTDEFINED, 'age_from' : age_from, 'age_to' : age_to, 'last_command' : ''}
     # end set_default_settings()
 
+    # проверка, что дополнительные свойства пользователя "пустые" = заполненные значениями по умолчанию
+    def settings_empty(self) -> bool:
+        result = self.settings['access_token'] != '' or self.settings['srch_offset'] != OFFSET_NOTDEFINED or self.settings['age_from'] != AGE_FROM_DEFAULT or self.settings['age_to'] != AGE_TO_DEFAULT or self.settings['last_command'] != ''
+        return result    
+    # end settings_empty()
+
     # заполнение атрибутов класса (данные) из списка, по порядку
     def set_attr_from_list(self, lst : list) -> bool:
         # проверяем, что переданы все атрибуты (пока без settings)
@@ -150,5 +157,23 @@ class VKUserData(object):
             self.settings['age_to'] = lst[3]
             self.settings['last_command'] = lst[4]
     # end set_settings_from_list()
+
+    # функция копирования из другого объекта типа VKUserData
+    def copy(self, vk_user):
+        self.vk_id = vk_user.vk_id
+        self.first_name = vk_user.first_name
+        self.last_name = vk_user.last_name
+        self.bdate = vk_user.bdate
+        self.gender = vk_user.gender
+        self.city_id = vk_user.city_id
+        self.city_title = vk_user.city_title
+        self.vkdomain = vk_user.vkdomain
+        self.last_visit = vk_user.last_visit
+        self.settings['access_token'] = vk_user.settings['access_token']
+        self.settings['srch_offset'] = vk_user.settings['srch_offset']
+        self.settings['age_from'] = vk_user.settings['age_from']
+        self.settings['age_to'] = vk_user.settings['age_to']
+        self.settings['last_command'] = vk_user.settings['last_command']
+    # end copy()
 
 # end class VKUserData

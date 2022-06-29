@@ -48,7 +48,7 @@ class DataBase(object):
         # если данных нет
         if result is None:
             return False 
-        # есд\ли данные есть     
+        # если данные есть     
         return True
     # end 
 
@@ -108,6 +108,11 @@ class DataBase(object):
         sql = f"""INSERT INTO favorites (vk_id, fav_id) VALUES ({vk_id}, {fav_id});
                """
         result = self.connection.execute(sql)
+        # удаляем id из списка поиска
+        self.del_last_search_id(vk_id, fav_id)
+        # удаляем id из черного списка
+        self.del_black_id(vk_id, fav_id)
+
         return True
     # end new_favorite()
     
@@ -126,11 +131,19 @@ class DataBase(object):
 
     # удалить избранный контакт у пользовалетя из базы данных
     def del_favotite(self, vk_id: int, fav_id: int) -> bool:
-        pass
+        sql = f"""DELETE FROM favorites WHERE vk_id = {vk_id} and fav_id = {fav_id};
+               """
+        self.connection.execute(sql)
+        return True
+    # end del_favorite()
 
     # удалить все избранные контакты пользователя
     def del_all_favorites(self, vk_id: int) -> bool:
-        pass
+        sql = f"""DELETE FROM favorites WHERE vk_id = {vk_id};
+               """
+        self.connection.execute(sql)
+        return True
+    # end del_all_favorites()
 
     # получить список заблокированных контактов
     def get_black_list(self, vk_id: int) -> list:
@@ -159,16 +172,42 @@ class DataBase(object):
         sql = f"""INSERT INTO black_list (vk_id, blk_id) VALUES ({vk_id}, {blk_id});
                """
         result = self.connection.execute(sql)
+        # удаляем id из списка поиска
+        self.del_last_search_id(vk_id, blk_id)
+        # удаляем id из списка фаворитов
+        self.del_favotite(vk_id, blk_id)
         return True
+
+    # удалить контакт из списка поиска
+    def del_last_search_id(self, vk_id: int, lst_id: int) -> bool:
+        sql = f"""DELETE FROM last_search WHERE vk_id = {vk_id} and lst_id = {lst_id};
+               """
+        result = self.connection.execute(sql)
+        return True
+    # end del_last_search_id()
+
+    # удалить контакт из списка поиска
+    def del_all_last_search(self, vk_id: int) -> bool:
+        sql = f"""DELETE FROM last_search WHERE vk_id = {vk_id};
+               """
+        result = self.connection.execute(sql)
+        return True
+    # end del_all_last_search_id()
 
     # удалить контакт из заблокированных
     def del_black_id(self, vk_id: int, blk_id: int) -> bool:
-        pass
+        sql = f"""DELETE FROM black_list WHERE vk_id = {vk_id} and blk_id = {blk_id};
+               """
+        result = self.connection.execute(sql)
+        return True
     # end del_black_id()
 
     # удалить весь "блэк лист" пользователя
     def del_black_list(self, vk_id: int) -> bool:
-        pass
+        sql = f"""DELETE FROM black_list WHERE vk_id = {vk_id};
+               """
+        result = self.connection.execute(sql)
+        return True
 
     def is_black(self, vk_id: int, blk_id: int) -> bool:
         sql = f"""
@@ -188,15 +227,13 @@ class DataBase(object):
         """
         result = self.connection.execute(sql).fetchone()
         # если запрос выполнился успешно
-        if result is not None:
-            # заполняем и возвращаем объект VKUserData
-            # нулевой элемент списка это vk_id из таблицы bd.search
-            vk_user.set_settings_from_list(list(result)[1:])
-        else: 
-            # если запрос к базе данных ничего не вернул
-            vk_user.set_default_settings()
+        if result is None:
             return False
+        # заполняем и возвращаем объект VKUserData
+        # нулевой элемент списка это vk_id из таблицы bd.search
+        vk_user.set_settings_from_list(list(result)[1:])
         return True
+    # end get_settings()
 
     def get_user(self, user_id, rch_number):
         sql = f"""
@@ -214,6 +251,7 @@ class DataBase(object):
                """
         result = self.connection.execute(sql)
         return True
+    # end set_settins()
 
     # обновить данные параметров пользователя в базе данных
     def upd_setings(self, vk_user: VKUserData) -> bool:

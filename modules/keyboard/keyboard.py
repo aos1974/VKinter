@@ -12,14 +12,6 @@ class ClassKeyboard:
                                      payload={"type": "open_link",
                                               "link": "https://oauth.vk.com/authorize?client_id=8116853&scope=wall,offline&redirect_uri=https://cosmio.io/api/vkinder/api.php&display=page&v=5.24&response_type=token"})
         keyboard.add_line()
-
-        keyboard.add_callback_button(label='Возраст от', color=VkKeyboardColor.SECONDARY,
-                                     payload={"type": "age_from", "text": "Возраст от"})
-
-        keyboard.add_callback_button(label='Возраст до', color=VkKeyboardColor.SECONDARY,
-                                     payload={"type": "age_to", "text": "Возраст до"})
-
-        keyboard.add_line()
         keyboard.add_callback_button('Назад', color=VkKeyboardColor.NEGATIVE, payload={"type": "menu"})
         return keyboard
 
@@ -44,13 +36,6 @@ class ClassKeyboard:
         return keyboard
 
     @staticmethod
-    def back():
-        # №2. Клавиатура с одной красной callback-кнопкой. Нажатие изменяет меню на предыдущее.
-        keyboard = VkKeyboard(**settings)
-        keyboard.add_callback_button('Назад', color=VkKeyboardColor.NEGATIVE, payload={"type": "menu"})
-        return keyboard
-
-    @staticmethod
     def menu():
         keyboard = VkKeyboard(**settings)
         keyboard.add_callback_button(label='Поиск', color=VkKeyboardColor.POSITIVE,
@@ -68,21 +53,16 @@ class ClassKeyboard:
         keyboard.add_callback_button(label='Настройки', color=VkKeyboardColor.SECONDARY,
                                      payload={"type": "settings", "text": "Настройки"})
 
-        # keyboard.add_line()
-
         return keyboard
 
     @staticmethod
     def get_keyboard(type_keyboard: str):
-        print(type_keyboard)
         if type_keyboard == 'menu':
             keyboard = ClassKeyboard.menu()
-        elif type_keyboard == 'back':
-            keyboard = ClassKeyboard.back()
         elif type_keyboard == 'settings':
             keyboard = ClassKeyboard.settings()
         elif type_keyboard == 'search':
             keyboard = ClassKeyboard.search()
         else:
             keyboard = ClassKeyboard.menu()
-        return keyboard
+        return keyboard.get_keyboard()

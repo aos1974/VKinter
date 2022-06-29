@@ -114,10 +114,10 @@ class Logic(object):
     # функция получения дополнительных настроек пользователя
     def get_settings(self, vk_instance):
         # если параметр это id пользователя
-        if type(vk) is int:
+        if type(vk_instance) is int:
             self.vkUser.vk_id = vk_instance
         # если параметр это объект VKUserData
-        elif type(vk) is VKUserData:
+        elif type(vk_instance) is VKUserData:
             self.vkUser.copy(vk_instance)
         self.get_setings_smart(self.vkUser)
     # end get_settings
@@ -153,7 +153,6 @@ class Logic(object):
     # считать дополнительные данные о пользователе из базы данных
     def get_setings_smart(self, vk_user: VKUserData):
         if not self.db.get_setings(vk_user):
-            # если запрос к базе данных ничего не вернул
-            vk_user.set_default_settings()
             # сохраняем исходные данные в базе данных
             self.db.set_setings(vk_user)
+    # end get_setings_smart()

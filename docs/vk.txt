@@ -4,3 +4,6 @@ https://dev.vk.com/api/access-token/authcode-flow-user
 
 НАШ БОТ
 https://vk.com/im?sel=-214168760
+
+Обработка оштбки "Too many requests per second"
+https://vivazzi.pro/ru/it/vk-error-6/

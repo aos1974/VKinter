@@ -8,7 +8,7 @@ from vk_api import VkApi
 from vk_api.utils import get_random_id
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from modules.API.ClassVK import ClassVK
-from modules.LOGIC.logic import Logic
+from modules.logic.logic import Logic
 from modules.data.data import API_VERSION, GROUP_ID, CALLBACK_TYPES
 from modules.db.databases import DataBase
 from modules.db.dataclasses import VKUserData
@@ -32,7 +32,7 @@ for event in longpoll.listen():
     logic.new_vk_user(vk_user)
     # = aos ==============================
     if user_id:
-        logic.get_settings(user_id)
+        logic.get_settings(vk_user)
         comand = logic.run_comand(comand=utils.get_comand(logic.get_command_text(event)))
         if event.type == VkBotEventType.MESSAGE_NEW:
             # Если пришло новое сообщение
