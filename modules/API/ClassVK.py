@@ -1,16 +1,18 @@
 ###########################
 # файл: ClassVK.py
-# version: 0.1.11
+# version: 0.1.15
 ###########################
 
 from pprint import pprint
+import time
+from urllib import response
 import requests
+from modules.data.data import API_VERSION
 from modules.db.dataclasses import VKUserData
-
 
 class ClassVK(object):
     API_URL = 'https://api.vk.com/method/'
-
+    
     def __init__(self, access_token=None):
         self.access_token = access_token
         # self.offset = 0 #Сдвиг для поиска
@@ -28,7 +30,6 @@ class ClassVK(object):
     def search(self, vk_user: VKUserData, offset, count):
         params = self.get_info(vk_user.vk_id)
         search_list = self.users_search(vk_user, params, count=count, offset=offset)
-        # pprint(search_list)
         return search_list
     
     def get_user_data(self, id):
@@ -36,7 +37,7 @@ class ClassVK(object):
         content = ''
         if id != 0:
             params = self.get_info(id)
-            # pprint(params)
+            
             if params:
                 content = f'\n{params.get("first_name")} {params.get("last_name")} https://vk.com/id{id}'
                 self.get_info(id)  # Параметры пользователя
@@ -58,10 +59,9 @@ class ClassVK(object):
             access_token = self.access_token
         params = dict(count=count, city=city, offset=offset,
                       age_from=vk_user.settings['age_from'], age_to=vk_user.settings['age_to'],
-                      sex=self.sex_invert(params_data.get("sex")), access_token=access_token, v='5.131', has_photo=1, status=6, sort=0)
+                      sex=self.sex_invert(params_data.get("sex")), access_token=access_token, v=API_VERSION, has_photo=1, status=6, sort=0)
 
-        # pprint(params)
-        res = requests.get(url, params=params)
+        res = self.get_vk_data(url, params)
         response = res.json().get("response")
         ids = []
         for r in response.get('items'):
@@ -71,18 +71,18 @@ class ClassVK(object):
         return ids
 
     def get_info(self, user_ids):
-        # print(user_ids)
         method = 'users.get'
         url = self.API_URL + method
         params = {
             'user_ids': user_ids,
             'access_token': self.access_token,
             'fields': 'screen_name, city, bdate, sex, screen_name',
-            'v': '5.131'
+            'v': API_VERSION
         }
-        res = requests.get(url, params=params)
+        
+        res = self.get_vk_data(url, params)
         response = res.json().get("response")
-        # print(response)
+        
         if response:
             return response[0]
         else:
@@ -97,10 +97,26 @@ class ClassVK(object):
             'access_token': self.access_token,
             'extended': 1,
             'count': count,
-            'v': '5.131'
+            'v': API_VERSION
         }
-        res = requests.get(url, params=params).json()
+        res = self.get_vk_data(url, params)
+        res = res.json()
 
         if res.get('error') is not None:
             print(res['error']['error_msg'])
         return res
+    
+    # функция для запроса данных от vk.API с контролем ошибки 'Too many requests per second'
+    @staticmethod
+    def get_vk_data(url, params) -> response:
+        repeat = True
+        while repeat:
+            resp = requests.get(url, params=params)
+            data = resp.json()
+            # если запрос вернул ошибку 'Too many requests per second'
+            if 'error' in data and 'error_code' in data['error'] and data['error']['error_code'] == 6:
+                time.sleep(2)
+            else:
+                repeat = False
+        return resp
+    # end get_vk_data()

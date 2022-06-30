@@ -1,10 +1,9 @@
 ###########################
 # файл: dataclasses.py
-# version: 0.1.12
+# version: 0.1.15
 ###########################
 
 from datetime import datetime
-from unittest import result
 
 # id "по умолчания" (т.е. не определенный) при создании класса
 VK_ID_NOTDEFINED = -1

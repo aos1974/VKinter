@@ -1,4 +1,8 @@
-from random import random
+###########################
+# файл: data.py
+# version: 0.1.15
+###########################
+
 #Настройки клавиатуры
 settings = dict(one_time=False, inline=False)
 #Виды CALLBACK кнопок, которые разрешены в сообществе

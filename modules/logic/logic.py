@@ -1,7 +1,8 @@
 ###########################
 # файл: logic.py
-# version: 0.1.11
+# version: 0.1.15
 ###########################
+
 from modules.db.databases import DataBase
 from vk_api.bot_longpoll import VkBotEventType
 from modules.db.dataclasses import VK_ID_NOTDEFINED, VKUserData
@@ -81,7 +82,7 @@ class Logic(object):
         else:
             return user[0]
 
-    #Следующий обрабатываемый пользователь
+    # Следующий обрабатываемый пользователь
     def get_next_user(self):
         self.vkUser.settings['srch_offset'] += 1
 
@@ -95,7 +96,7 @@ class Logic(object):
             else:
                 return self.api.get_user_data(id)
 
-    #Предыдущий обрабатываемый пользователь
+    # Предыдущий обрабатываемый пользователь
     def get_previous_user(self):
         self.vkUser.settings['srch_offset'] -= 1
         if self.vkUser.settings.get('srch_offset') > 1:
