@@ -1,6 +1,6 @@
 ###########################
 # файл: databases.py
-# version: 0.1.15
+# version: 0.1.17
 ###########################
 
 import sqlalchemy
@@ -38,6 +38,7 @@ class DataBase(object):
 
     # get_vkuser()
 
+
     # функция проверки, есть ли пользователь в базе данных
     def id_in_database(self, vk_id: int) -> bool:
         
@@ -55,26 +56,39 @@ class DataBase(object):
     # функция сохранения данных о пользователе ВКонтакте в базу данных
     # возвращае True, если данные сохранены в базе данных, иначе False
     def new_vkuser(self, vk_user: VKUserData) -> bool:
-        
+        res = True
         if not self.id_in_database(vk_user.vk_id):
             # нет такого пользователя в базе данных
             sql = f"""
                 INSERT INTO vk_users (vk_id,first_name,last_name,bdate,gender,city_id,city_title,vkdomain,last_visit) 
                 VALUES ({vk_user.vk_id},'{vk_user.first_name}','{vk_user.last_name}','{vk_user.bdate}',{vk_user.gender},{vk_user.city_id},'{vk_user.city_title}','{vk_user.vkdomain}','{vk_user.last_visit}');
                 """
+            result = self.connection.execute(sql)
+            # если запрос выполнился с ошибкой
+            if result is None:
+                res = False
         else:
             # пользователь уже существует в базе данных
-            sql = f"""
-                UPDATE vk_users SET last_visit = '{vk_user.last_visit}' WHERE vk_id = {vk_user.vk_id};
-                """
+            result = self.vk_user_update_last_visit(vk_user)
+            # если запрос выполнился с ошибкой
+            if result is None:
+                res = False
+        # успешный результат
+        return res
+    # enf new_vk_user
+    
+    # обновляем время последнего общения с ботом у существующего в базе пользователя
+    def vk_user_update_last_visit(self, vk_user: VKUserData) -> bool:
+        sql = f"""
+            UPDATE vk_users SET last_visit = '{vk_user.last_visit}' WHERE vk_id = {vk_user.vk_id};
+            """
         result = self.connection.execute(sql)
         # если запрос выполнился с ошибкой
         if result is None:
             return False
         # успешный результат
-        return True
-
-    # enf new_vk_user
+        return True        
+    # end vk_user_update_last_visit()
 
     # Вставить массив данных в last_search
     def insert_last_search(self, user_id, lst_ids, position):
@@ -249,7 +263,7 @@ class DataBase(object):
         VALUES ('{vk_user.vk_id}','{vk_user.settings.get('access_token')}','{vk_user.settings.get('srch_offset')}','
         {vk_user.settings.get('age_from')}','{vk_user.settings.get('age_to')}','{vk_user.settings.get('last_command')}');
                """
-        result = self.connection.execute(sql)
+        self.connection.execute(sql)
         return True
     # end set_settins()
 
@@ -257,11 +271,11 @@ class DataBase(object):
     def upd_setings(self, vk_user: VKUserData) -> bool:
 
         sql = f"""
-        UPDATE settings SET srch_offset = '{vk_user.settings['srch_offset']}', access_token = '{vk_user.settings['access_token']}',
-        age_from = '{vk_user.settings['age_from']}',age_to = '{vk_user.settings['age_to']}', last_command = '{vk_user.settings['last_command']}' 
+        UPDATE settings SET srch_offset = '{vk_user.settings.srch_offset}', access_token = '{vk_user.settings.access_token}',
+        age_from = '{vk_user.settings.age_from}',age_to = '{vk_user.settings.age_to}', last_command = '{vk_user.settings.last_command}' 
         WHERE vk_id={vk_user.vk_id};
                """
-        result = self.connection.execute(sql)
+        self.connection.execute(sql)
         return True
 
 

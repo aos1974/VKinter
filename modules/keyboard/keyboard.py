@@ -12,6 +12,12 @@ class ClassKeyboard:
                                      payload={"type": "open_link",
                                               "link": "https://oauth.vk.com/authorize?client_id=8116853&scope=wall,offline&redirect_uri=https://cosmio.io/api/vkinder/api.php&display=page&v=5.24&response_type=token"})
         keyboard.add_line()
+
+        keyboard.add_callback_button(label='Введите токен', color=VkKeyboardColor.SECONDARY,
+                                     payload={"type": "set_token", "text": "Введите токен"})
+
+        keyboard.add_line()
+
         keyboard.add_callback_button('Назад', color=VkKeyboardColor.NEGATIVE, payload={"type": "menu"})
         return keyboard
 

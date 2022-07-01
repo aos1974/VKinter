@@ -1,6 +1,6 @@
 ###########################
 # файл: main.py
-# version: 0.1.15
+# version: 0.1.17
 ###########################
 
 import json
@@ -11,7 +11,6 @@ from modules.API.ClassVK import ClassVK
 from modules.logic.logic import Logic
 from modules.data.data import API_VERSION, GROUP_ID, CALLBACK_TYPES
 from modules.db.databases import DataBase
-from modules.db.dataclasses import VKUserData
 from modules.keyboard.keyboard import ClassKeyboard
 from modules.utils import utils
 
@@ -21,19 +20,15 @@ def main():
     vk_session = VkApi(token=utils.get_token('VKinder'), api_version=API_VERSION)
     vk = vk_session.get_api()
     longpoll = VkBotLongPoll(vk_session, group_id=GROUP_ID)
-    myApi = ClassVK(utils.get_token('access_token'))
-    db = DataBase(utils.get_token('db_connection'))
-    logic = Logic(db, myApi)
+    logic = Logic(DataBase(utils.get_token('db_connection')), ClassVK(utils.get_token('access_token')))
     print(f"Бот запущен")
 
     # Основной цикл обработки событий 
     for event in longpoll.listen():
         user_id = logic.get_user_id(event)
-        vk_user = VKUserData(myApi.get_info(user_id))
-        logic.new_vk_user(vk_user)
         if user_id:
-            logic.get_settings(vk_user)
-            comand = logic.run_comand(comand=utils.get_comand(logic.get_command_text(event)))
+            logic.new_vk_user(user_id) #Инициализируем пользователя
+            comand = logic.run_comand(comand=logic.get_comand(event))
             if event.type == VkBotEventType.MESSAGE_NEW:
                 # Если пришло новое сообщение
                 if event.obj.message['text'] != '':
@@ -50,10 +45,12 @@ def main():
                 if event.object.payload.get('type') in CALLBACK_TYPES:
                     if event.object.payload.get('type') == 'show_snackbar':
                         if 'черный' in event.object.payload.get('text'):
-                            db.new_black_id(event.object.user_id, logic.get_user(user_id))
+                            logic.add_black_list(event.object.user_id)
+
                         elif 'избранное' in event.object.payload.get('text'):
-                            db.new_favorite(event.object.user_id, logic.get_user(user_id))
-                    r = vk.messages.sendMessageEventAnswer(
+                            logic.add_favorite_list(event.object.user_id)
+
+                    vk.messages.sendMessageEventAnswer(
                         event_id=event.object.event_id,
                         user_id=user_id,
                         peer_id=event.object.peer_id,
@@ -67,6 +64,8 @@ def main():
                         peer_id=event.object.peer_id,
                         keyboard=ClassKeyboard.get_keyboard(comand['keyboard']),
                         message=utils.get_answer(comand))
+            else:
+                continue
             logic.upd_settings()
 # end main()
 

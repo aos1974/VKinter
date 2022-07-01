@@ -15,7 +15,6 @@ class ClassVK(object):
     
     def __init__(self, access_token=None):
         self.access_token = access_token
-        # self.offset = 0 #Сдвиг для поиска
         
     @staticmethod
     def sex_invert(sex):
@@ -28,20 +27,23 @@ class ClassVK(object):
         return sex
 
     def search(self, vk_user: VKUserData, offset, count):
-        params = self.get_info(vk_user.vk_id)
-        search_list = self.users_search(vk_user, params, count=count, offset=offset)
+        search_list = self.users_search(vk_user, count=count, offset=offset)
         return search_list
     
     def get_user_data(self, id):
         attachments = []
         content = ''
         if id != 0:
+            # Параметры пользователя
             params = self.get_info(id)
-            
-            if params:
-                content = f'\n{params.get("first_name")} {params.get("last_name")} https://vk.com/id{id}'
-                self.get_info(id)  # Параметры пользователя
 
+            if params:
+                city = bdata = ""
+                if params.get('city'):
+                    city = params.get('city').get('title')
+                if params.get('bdate'):
+                    bdata = params.get('bdate')
+                content = f'\n[id{id}|{params.get("first_name")} {params.get("last_name")}] {city} {bdata}'
                 photos = self.photos_get(id, 3)
                 if photos.get('response') is not None:
                     items = photos['response']['items']
@@ -49,19 +51,20 @@ class ClassVK(object):
                         attachments.append(f'photo{id}_{item.get("id")}')
         return [','.join(attachments), content]
 
-    def users_search(self, vk_user: VKUserData, params_data, count=1, offset=0):
+    def users_search(self, vk_user: VKUserData, count=1, offset=0):
         method = 'users.search'
+        pprint(vk_user.settings)
+        pprint(vk_user.city_id)
         url = self.API_URL + method
-        access_token = vk_user.settings['access_token']
-        if params_data.get("city"):
-            city = params_data.get("city").get("id")
+        access_token = vk_user.settings.access_token
         if not access_token:
             access_token = self.access_token
-        params = dict(count=count, city=city, offset=offset,
-                      age_from=vk_user.settings['age_from'], age_to=vk_user.settings['age_to'],
-                      sex=self.sex_invert(params_data.get("sex")), access_token=access_token, v=API_VERSION, has_photo=1, status=6, sort=0)
-
+        params = dict(count=count, city=vk_user.city_id, offset=offset,
+                      age_from=vk_user.settings.age_from, age_to=vk_user.settings.age_to,
+                      sex=self.sex_invert(vk_user.gender), access_token=access_token, v=API_VERSION, has_photo=1, status=6, sort=0)
+        print(method, params)
         res = self.get_vk_data(url, params)
+        print(res.json())
         response = res.json().get("response")
         ids = []
         for r in response.get('items'):
@@ -70,8 +73,31 @@ class ClassVK(object):
                 ids.append(r.get("id"))
         return ids
 
+    def check_token(self, user_id, access_token):
+        #Проверим токен на валидность и принадлежность пользователю
+        method = 'users.get'
+        print(method, )
+        url = self.API_URL + method
+        params = {
+            'user_ids': user_id,
+            'access_token': access_token,
+            'v': API_VERSION
+        }
+
+        res = self.get_vk_data(url, params)
+        response = res.json().get("response")
+
+        for r in response:
+            if r.get('id'):
+                if r.get('id') == user_id:
+                    #Токен корректный
+                    return True
+
+        # Токен не корректный
+        return False
     def get_info(self, user_ids):
         method = 'users.get'
+        print(method, user_ids)
         url = self.API_URL + method
         params = {
             'user_ids': user_ids,
@@ -109,6 +135,7 @@ class ClassVK(object):
     # функция для запроса данных от vk.API с контролем ошибки 'Too many requests per second'
     @staticmethod
     def get_vk_data(url, params) -> response:
+        resp = ''
         repeat = True
         while repeat:
             resp = requests.get(url, params=params)

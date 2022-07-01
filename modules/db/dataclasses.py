@@ -2,7 +2,8 @@
 # файл: dataclasses.py
 # version: 0.1.15
 ###########################
-
+# from dataclasses import dataclass
+from dataclasses import dataclass
 from datetime import datetime
 
 # id "по умолчания" (т.е. не определенный) при создании класса
@@ -17,6 +18,14 @@ AGE_TO_DEFAULT = 50
 VK_MALE = 2
 VK_FEMALE = 1
 VK_UNKNOWN_GENDER = 0
+
+@dataclass
+class UserSettings:
+    access_token: str
+    srch_offset: int
+    age_from: int
+    age_to: int
+    last_command: str
 
 # Класс определяющий набор данных пользователя ВКонтакте
 class VKUserData(object): 
@@ -39,7 +48,7 @@ class VKUserData(object):
     # Дата время последнего общения с ботом
     last_visit: str
     # дополнительные свойства пользователя ВКонтакте
-    settings : list
+    settings: UserSettings
 
     # инициализация класса
     def __init__(self, *vk_data):
@@ -91,13 +100,15 @@ class VKUserData(object):
             # иначе используем значения по умолчанию
             age_from = AGE_FROM_DEFAULT
             age_to = AGE_TO_DEFAULT
-            
-        self.settings = {'access_token' : '', 'srch_offset' : OFFSET_NOTDEFINED, 'age_from' : age_from, 'age_to' : age_to, 'last_command' : ''}
+
+
+        self.settings = UserSettings(access_token='', srch_offset=OFFSET_NOTDEFINED, age_from=age_from, age_to=age_to,
+                             last_command='')
     # end set_default_settings()
 
     # проверка, что дополнительные свойства пользователя "пустые" = заполненные значениями по умолчанию
     def settings_empty(self) -> bool:
-        result = self.settings['access_token'] != '' or self.settings['srch_offset'] != OFFSET_NOTDEFINED or self.settings['age_from'] != AGE_FROM_DEFAULT or self.settings['age_to'] != AGE_TO_DEFAULT or self.settings['last_command'] != ''
+        result = self.settings.access_token != '' or self.settings.srch_offset != OFFSET_NOTDEFINED or self.settings.age_from != AGE_FROM_DEFAULT or self.settings.age_to != AGE_TO_DEFAULT or self.settings.last_command != ''
         return result    
     # end settings_empty()
 
@@ -150,11 +161,7 @@ class VKUserData(object):
     def set_settings_from_list(self, lst : list):
         # если передан полный список ,то заполняем дополнительные свойства
         if len(lst) == 5:
-            self.settings['access_token'] = lst[0]
-            self.settings['srch_offset'] = lst[1]
-            self.settings['age_from'] = lst[2]
-            self.settings['age_to'] = lst[3]
-            self.settings['last_command'] = lst[4]
+            self.settings = UserSettings(*lst)
     # end set_settings_from_list()
 
     # функция копирования из другого объекта типа VKUserData
@@ -168,11 +175,7 @@ class VKUserData(object):
         self.city_title = vk_user.city_title
         self.vkdomain = vk_user.vkdomain
         self.last_visit = vk_user.last_visit
-        self.settings['access_token'] = vk_user.settings['access_token']
-        self.settings['srch_offset'] = vk_user.settings['srch_offset']
-        self.settings['age_from'] = vk_user.settings['age_from']
-        self.settings['age_to'] = vk_user.settings['age_to']
-        self.settings['last_command'] = vk_user.settings['last_command']
+
+        self.settings = vk_user.settings
     # end copy()
 
-# end class VKUserData

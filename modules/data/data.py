@@ -14,6 +14,14 @@ GROUP_ID = '214168760' #ID Сообщества
 
 #Команды
 comands = {
+    'save_token': {'in': ['save_token'],
+                  'out': [''],
+                  'key': 'save_token',
+                  'keyboard': 'save_token'},
+    'set_token': {'in': ['set_token'],
+           'out': ['Нажмите "Получить токен", скопируйте из URL параметр access_token и отправьте мне'],
+           'key': 'set_token',
+           'keyboard': 'search'},
     'search': {'in': ['search', 'поиск', 'искать', 'найти'],
               'out': ['Вот что я нашел'],
               'key': 'search',
