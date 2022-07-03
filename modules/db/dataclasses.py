@@ -1,6 +1,6 @@
 ###########################
 # файл: dataclasses.py
-# version: 0.1.15
+# version: 0.1.18
 ###########################
 # from dataclasses import dataclass
 from dataclasses import dataclass
@@ -30,23 +30,23 @@ class UserSettings:
 # Класс определяющий набор данных пользователя ВКонтакте
 class VKUserData(object): 
     # id пользователя ВКонтакте
-    vk_id : int
+    vk_id : int = VK_ID_NOTDEFINED
     # Имя пользователя ВКонтакте
-    first_name : str
+    first_name : str = ''
     # Фамилия пользователя
-    last_name: str
+    last_name: str = ''
     # День рождения пользователя
-    bdate: str
+    bdate: str = ''
     # Пол пользоветеля
-    gender : int
+    gender : int = VK_UNKNOWN_GENDER
     # id города пользователя
-    city_id: int
+    city_id: int = -1
     # Название города пользователя
-    city_title: str
+    city_title: str = ''
     # адрес траницы ВКонтакте пользователя
-    vkdomain: str
+    vkdomain: str = ''
     # Дата время последнего общения с ботом
-    last_visit: str
+    last_visit: str = ''
     # дополнительные свойства пользователя ВКонтакте
     settings: UserSettings
 
@@ -67,8 +67,10 @@ class VKUserData(object):
             elif type(vk_data[0]) is dict:
                 if not self.set_attr_from_dict(vk_data[0]):
                     # то также заполняем параметрами "по умолчанию"
-                    self.set_default_attrs()        
-            
+                    self.set_default_attrs()  
+            else:      
+                # инициализация данных "по умолчанию", если переданн неизвестный набор данных
+                self.set_default_attrs()
         # инициализируем дополниетльные параметры класса (settings)
         self.set_default_settings()
     # end __init__()

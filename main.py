@@ -1,6 +1,6 @@
 ###########################
 # файл: main.py
-# version: 0.1.17
+# version: 0.1.18
 ###########################
 
 import json
@@ -16,10 +16,22 @@ from modules.utils import utils
 
 # основаная функция программы
 def main():
+    # загружаем токен для инициализации API
+    token = utils.get_token('VKinder')
+    # если токен не удалось загрузить бот не стартует
+    if token == None:
+        print('Инициализация бота невозможна!')
+        return False
     # Инициализация объектов
-    vk_session = VkApi(token=utils.get_token('VKinder'), api_version=API_VERSION)
+    vk_session = VkApi(token=token, api_version=API_VERSION)
     vk = vk_session.get_api()
-    longpoll = VkBotLongPoll(vk_session, group_id=GROUP_ID)
+    try:
+        longpoll = VkBotLongPoll(vk_session, group_id=GROUP_ID)
+    except Exception as err:
+        # обработка ошибки инициализации обработчика событий Бота
+        print('Ошибка инициализации API VK')
+        print(err)
+        return False
     logic = Logic(DataBase(utils.get_token('db_connection')), ClassVK(utils.get_token('access_token')))
     print(f"Бот запущен")
 

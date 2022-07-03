@@ -1,6 +1,6 @@
 ###########################
 # файл: logic.py
-# version: 0.1.17
+# version: 0.1.18
 ###########################
 from modules.data.data import comands
 from modules.db.databases import DataBase
