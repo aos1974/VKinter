@@ -5,7 +5,7 @@
 from modules.data.data import comands
 from modules.db.databases import DataBase
 from vk_api.bot_longpoll import VkBotEventType
-from modules.db.dataclasses import VK_ID_NOTDEFINED, VKUserData
+from modules.db.dataclasses import VKUserData
 
 class Logic(object):
 
@@ -19,7 +19,7 @@ class Logic(object):
     # функция обновления информации о пользователе начавшем диалог с ВКБотом
     # функция вызывается ВКБотом при начале диалога пользователя
     # возвращае True, если данные сохранены, иначе False
-    def new_vk_user(self, user_id)-> bool:# vk_user: VKUserData) -> bool:
+    def new_vk_user(self, user_id)-> bool:
         
         if user_id is None:
             return False
@@ -131,17 +131,6 @@ class Logic(object):
         else:
             return [None, "не существует"]
 
-    # функция получения дополнительных настроек пользователя
-    # def get_settings(self):
-        # если параметр это id пользователя
-        # if type(vk_instance) is int:
-        #     self.vkUser.vk_id = vk_instance
-        # # если параметр это объект VKUserData
-        # elif type(vk_instance) is VKUserData:
-        #     self.vkUser.copy(vk_instance)
-        # self.get_setings_smart(vk_instance)#self.vkUser)
-    # end get_settings
-
     def upd_settings(self):
         self.db.upd_setings(self.vkUser)
 
@@ -178,6 +167,7 @@ class Logic(object):
             # сохраняем исходные данные в базе данных
             self.db.set_setings(self.vkUser)
     # end get_setings_smart()
+    
     def add_black_list(self, user_id):
         self.db.new_black_id(user_id, self.get_user(user_id))
 
