@@ -58,7 +58,6 @@ def main():
                     if event.object.payload.get('type') == 'show_snackbar':
                         if 'черный' in event.object.payload.get('text'):
                             logic.add_black_list(event.object.user_id)
-
                         elif 'избранное' in event.object.payload.get('text'):
                             logic.add_favorite_list(event.object.user_id)
 

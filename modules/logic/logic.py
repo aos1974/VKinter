@@ -72,7 +72,7 @@ class Logic(object):
             elif key == 'black_list':
                 content = self.get_list(content, self.db.get_black_list(self.vkUser.vk_id))
             elif key == 'favorites':
-                content = self.get_list(content, self.db.get_black_list(self.vkUser.vk_id))
+                content = self.get_list(content, self.db.get_favorites(self.vkUser.vk_id))
             elif key == 'save_token':
                 if self.api.check_token(self.vkUser.vk_id, self.request):
                     self.vkUser.settings.access_token = self.request

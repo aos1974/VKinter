@@ -22,4 +22,9 @@ vk_id = 37584229
 vk_user = vk_db.get_vkuser(vk_id)
 print(vk_user.vk_id, vk_user.first_name, vk_user.last_name)
 
+vk_db.insert_last_search(vk_id, [22211333, 22211334, 22211335], 1)
+
+print('End')
+
+
 

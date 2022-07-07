@@ -211,8 +211,8 @@ class DataBase(object):
         
         # если это новый id, то записываем его в базу данных
         query = self.favorites.insert().values(
-            self.favorites.c.vk_id == vk_id,
-            self.favorites.c.fav_id == fav_id
+            vk_id = vk_id,
+            fav_id = fav_id
         )
         result = self.connection.execute(query)
         # удаляем id из списка поиска
