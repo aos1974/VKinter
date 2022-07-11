@@ -4,7 +4,7 @@
 # Работа с БД используя SQLAlchemy.ORM
 ###########################
 
-from sqlalchemy import Column, Integer, PrimaryKeyConstraint, String, create_engine
+from sqlalchemy import Column, Integer, PrimaryKeyConstraint, String, and_, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -184,7 +184,7 @@ class DataBase(object):
                 last_visit = vk_user.last_visit
             )
 
-            result = self.session.add(cc_vk_users)
+            self.session.add(cc_vk_users)
             self.session.commit()
         else:
             # пользователь уже существует в базе данных
@@ -200,22 +200,96 @@ class DataBase(object):
     # Вставить массив данных в last_search
     def insert_last_search(self, user_id, lst_ids, position):
         
+        last_search_list = []
+
+        # формируем список для сохранения в базе данных
         for lst_id in lst_ids:
-            query = select([self.last_search]).where(
+            record = self.session.query(last_search).filter(
                 and_(
-                    self.last_search.c.vk_id == user_id,
-                    self.last_search.c.lst_id == lst_id
-                )
-            )
-           
-            result = self.connection.execute(query).fetchone()
+                    last_search.vk_id == user_id, 
+                    last_search.lst_id == lst_id
+                    )
+                ).first()
             
-            if result is None:
-                query = self.last_search.insert().values(
-                    vk_id = user_id,
-                    lst_id = lst_id,
-                    srch_number = position
-                )
-                result = self.connection.execute(query)
+            if record is None:
+                last_search_item = last_search(vk_id = user_id,
+                                               lst_id = lst_id,
+                                               srch_number = position)
+                last_search_list.append(last_search_item)
                 position += 1
+        
+        # записываем результат в базу данных
+        if len(last_search_list) > 0:
+            record = self.session.bulk_save_objects(last_search_list)
+            self.session.commit()
     # end insert_last_search()
+
+    # удалить пользователя ВКонтакте в базе данных
+    def del_vkuser(self, vk_id: int) -> bool:
+        pass
+    
+    # удалить контакт из списка поиска
+    def del_last_search_id(self, vk_id: int, lst_id: int) -> bool:
+
+        query = self.session.query(last_search)
+        query = query.filter(
+            and_(
+                last_search.vk_id == vk_id,
+                last_search.lst_id == lst_id
+            )
+        )
+        dcc_last_search = query.one()
+        self.session.delete(dcc_last_search)
+        self.session.commit()
+        
+        return True
+    # end del_last_search_id()
+
+    # удалить контакта из заблокированных
+    def del_black_id(self, vk_id: int, blk_id: int) -> bool:
+
+        query = self.session.query(black_list)
+        query = query.filter(
+            and_(
+                black_list.vk_id == vk_id,
+                black_list.blk_id == blk_id
+            )
+        )
+        dcc_black_id = query.first()
+        self.session.delete(dcc_black_id)
+        self.session.commit()
+        
+        return True
+    # end del_black_id()
+
+    # сохранить в базе данных информацию об избранном контакте
+    def new_favorite(self, vk_id: int, fav_id: int) -> bool:
+        # проверяем , есть ли уже такой id в избранных
+
+        record = self.session.query(favorites).filter(
+            and_(
+                favorites.vk_id == vk_id, 
+                favorites.fav_id == fav_id
+                )
+            ).first()
+                
+        # если есть то записей в базу данных не делаем
+        if record is not None:
+            return False
+        
+        # если это новый id, то записываем его в базу данных
+        cc_favorite = favorites(
+            vk_id = vk_id,
+            fav_id = fav_id
+            )
+        self.session.add(cc_favorite)
+        self.session.commit()
+        # удаляем id из списка поиска
+        self.del_last_search_id(vk_id, fav_id)
+        # удаляем id из черного списка
+        self.del_black_id(vk_id, fav_id)
+
+        return True
+    # end new_favorite()        
+
+    

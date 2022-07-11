@@ -35,6 +35,12 @@ vk_user.first_name = 'Каролина'
 vk_user.vkdomain = 'KarolinaT'
 vk_db.new_vkuser(vk_user)
 
+vk_db.insert_last_search(vk_user.vk_id, [55500111, 55500112, 55500115], 1)
+
+vk_db.del_last_search_id(vk_user.vk_id, 55500111)
+
+vk_db.new_favorite(vk_user.vk_id, 55500112)
+
 print('End')
 
 
