@@ -1,14 +1,112 @@
 ###########################
 # файл: databases2.py
-# version: 0.2.1
+# version: 0.3.1
 # Работа с БД используя SQLAlchemy.ORM
 ###########################
 
-from sqlalchemy import Column, Integer, MetaData, PrimaryKeyConstraint, String, and_, create_engine, Table, delete, select, update
+from sqlalchemy import Column, Integer, PrimaryKeyConstraint, String, create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
 from modules.db.dataclasses import VKUserData
 
 # Глобальный переменные и классы модуля
 POSTGRES_DB = 'postgresql://vkdbadmin:vk2022boT!!!@172.18.89.161:5432/vkusers'
+
+# Определяем объекты связанные с Базой данных
+Base = declarative_base()
+
+# таблица vk_users
+class vk_users(Base):
+    __tablename__ = 'vk_users'
+
+    vk_id = Column(Integer(), primary_key=True)
+    first_name = Column(String(40), nullable=False)
+    last_name = Column(String(40))
+    bdate = Column(String(40))
+    gender = Column(Integer())
+    city_id  = Column(Integer())
+    city_title = Column(String(60))
+    vkdomain = Column(String(100))
+    last_visit = Column(String(40))
+
+    def __repr__(self) -> str:
+        return "vk_users(vk_id='{self.vk_id}', " \
+                        "first_name='{self.first_name}', " \
+                        "last_name='{self.last_name}', " \
+                        "bdate='{self.bdate}', " \
+                        "gender='{self.gender}', " \
+                        "city_id='{self.city_id}', " \
+                        "city_title='{self.city_title}', " \
+                        "vkdomain='{self.vkdomain}', " \
+                        "last_visit='{self.last_visit}')".format(self=self)
+
+# end class vk_users
+
+# таблица settings
+class settings(Base):
+    __tablename__ = 'settings'
+
+    vk_id = Column(Integer(), primary_key=True)
+    access_token = Column(String(255))
+    srch_offset = Column(Integer())
+    age_from = Column(Integer())
+    age_to = Column(Integer())
+    last_command = Column(String(100))
+
+    def __repr__(self) -> str:
+        return "setting(vk_id='{self.vk_id}', " \
+                       "access_token='{self.access_token}', " \
+                       "srch_offset='{self.srch_offset}', " \
+                       "age_from='{self.age_from}', " \
+                       "age_to='{self.age_to}', " \
+                       "last_command='{self.last_command}')".format(self=self)
+
+# end class settings
+
+# таблица last_search
+class last_search(Base):
+    __tablename__ = 'last_search'
+    __table_args__ = (PrimaryKeyConstraint('vk_id', 'lst_id', name='last_search_pk'),)
+
+    vk_id = Column(Integer(), nullable=False)
+    lst_id = Column(Integer(), nullable=False)
+    srch_number = Column(Integer())
+
+    def __repr__(self) -> str:
+        return "last_search(vk_id='{self.vk_id}', " \
+                           "lst_id='{self.lst_id}', " \
+                           "srch_number='{self.srch_number}')".format(self=self)
+
+# end class last_search
+
+# таблица favorites
+class favorites(Base):
+    __tablename__ = 'favorites'
+    __table_args__ = (PrimaryKeyConstraint('vk_id', 'fav_id', name='favorites_pk'),)
+
+    vk_id = Column(Integer(), nullable=False)
+    fav_id = Column(Integer(), nullable=False)
+
+    def __repr__(self) -> str:
+        return "favorites(vk_id='{self.vk_id}', " \
+                         "fav_id='{self.fav_id}')".format(self=self)
+
+# end class favorites
+
+# таблица black_list
+class black_list(Base):
+    __tablename__ = 'black_list'
+    __table_args__ = (PrimaryKeyConstraint('vk_id', 'blk_id', name='black_list_pk'),)
+
+    vk_id = Column(Integer(), nullable=False)
+    blk_id = Column(Integer(), nullable=False)
+
+    def __repr__(self) -> str:
+        return "black_list(vk_id='{self.vk_id}', " \
+                          "blk_id='{self.blk_id}')".format(self=self)    
+
+# end class black_list
 
 # класс для взаимодействия с базой данных
 class DataBase(object):
@@ -19,71 +117,31 @@ class DataBase(object):
         # инициализируем соединение с базой данных
         self.db = db
         self.engine = create_engine(self.db)
-        self.connection = self.engine.connect()
                 
         # создаем таблицы в Базе данных, только если они не существуют
-        self.metadata = MetaData()
-        self.create_tables()
+        Base.metadata.create_all(self.engine)
+
+        # открываем сессию для работы ORM  сБазой данных
+        Session = sessionmaker(bind=self.engine)
+        self.session = Session()
         
     # end __init__()
-    
-    def create_tables(self):
-        # определение таблиц Базы данных
-        self.vk_users = Table('vk_users', self.metadata,
-            Column('vk_id', Integer(), primary_key=True),
-            Column('first_name', String(40), nullable=False),
-            Column('last_name', String(40)),
-            Column('bdate', String(40)),
-            Column('gender', Integer()),
-            Column('city_id', Integer()),
-            Column('city_title', String(60)),
-            Column('vkdomain', String(100)),
-            Column('last_visit', String(40))
-        )
-        
-        self.settings = Table('settings', self.metadata,
-            Column('vk_id', Integer(), nullable=False, unique=True),
-            Column('access_token', String(255)),
-            Column('srch_offset', Integer()),
-            Column('age_from', Integer()),
-            Column('age_to', Integer()),
-            Column('last_command', String(100))
-        )
-        
-        self.last_search = Table('last_search', self.metadata,
-            Column('vk_id', Integer(), nullable=False),
-            Column('lst_id', Integer(), nullable=False),
-            Column('srch_number', Integer()),
-            PrimaryKeyConstraint('vk_id', 'lst_id', name='last_search_pk')
-        )
-        
-        self.favorites = Table('favorites', self.metadata,
-            Column('vk_id', Integer(), nullable=False),
-            Column('fav_id', Integer(), nullable=False),
-            PrimaryKeyConstraint('vk_id', 'fav_id', name='favorites_pk')
-        )
-        
-        self.black_list = Table('black_list', self.metadata,
-            Column('vk_id', Integer(), nullable=False),
-            Column('blk_id', Integer(), nullable=False),
-            PrimaryKeyConstraint('vk_id', 'blk_id', name='black_list_pk')
-        )
-        
-        self.metadata.create_all(self.engine)
-    # end create_tables()
 
     # функция получения данных пользователя ВКонтакте из базы данных
     # возвращает объект типа VKUserData или None, если запрос неудачный (нет данных)
     def get_vkuser(self, vk_id: int) -> VKUserData:
+        vk_user = None
         # формируем заброс к базе данных
-        query = select([self.vk_users]).where(self.vk_users.c.vk_id == vk_id)
-        result = self.connection.execute(query).fetchone()
+        record = self.session.query(vk_users).filter(vk_users.vk_id == vk_id).first()
+
         # заполняем и возвращаем объект VKUserData
-        if result is not None:
-            vk_user = VKUserData(list(result))
-        else:
-            vk_user = None
+        if record is not None:
+            vk_user = VKUserData([record.vk_id, record.first_name, record.last_name,
+                                record.bdate, record.gender, record.city_id, record.city_title,
+                                record.vkdomain, record.last_visit])
+
         return vk_user        
+
     # end get_vkuser()
 
     # функция проверки, есть ли пользователь в базе данных
@@ -94,21 +152,19 @@ class DataBase(object):
         
         return True
     # end id_in_database()
-    
+
     # обновляем время последнего общения с ботом у существующего в базе пользователя
     def vk_user_update_last_visit(self, vk_user: VKUserData) -> bool:
-        query = update(self.vk_users).where(self.vk_users.c.vk_id == vk_user.vk_id)
-        query = query.values(
-            last_visit = vk_user.last_visit
-        )
-        result = self.connection.execute(query)
-        # если запрос выполнился с ошибкой
-        if result is None:
+        query = self.session.query(vk_users)
+        query = query.filter(vk_users.vk_id == vk_user.vk_id)
+        if query.update({vk_users.last_visit: vk_user.last_visit}) == 0:
+        # если update не выполнился
             return False
         # успешный результат
+        self.session.commit()
         return True        
     # end vk_user_update_last_visit()
-    
+
     # функция сохранения данных о пользователе ВКонтакте в базу данных
     # возвращае True, если данные сохранены в базе данных, иначе False
     def new_vkuser(self, vk_user: VKUserData) -> bool:
@@ -116,7 +172,7 @@ class DataBase(object):
         
         if not self.id_in_database(vk_user.vk_id):
             # нет такого пользователя в базе данных
-            query = self.vk_users.insert().values(
+            cc_vk_users = vk_users(
                 vk_id = vk_user.vk_id,
                 first_name = vk_user.first_name,
                 last_name = vk_user.last_name,
@@ -127,10 +183,9 @@ class DataBase(object):
                 vkdomain = vk_user.vkdomain,
                 last_visit = vk_user.last_visit
             )
-            result = self.connection.execute(query)
-            # если запрос выполнился с ошибкой
-            if result is None:
-                res = False
+
+            result = self.session.add(cc_vk_users)
+            self.session.commit()
         else:
             # пользователь уже существует в базе данных
             result = self.vk_user_update_last_visit(vk_user)
@@ -141,7 +196,7 @@ class DataBase(object):
         # успешный результат
         return res
     # enf new_vk_user()
-    
+
     # Вставить массив данных в last_search
     def insert_last_search(self, user_id, lst_ids, position):
         
@@ -164,234 +219,3 @@ class DataBase(object):
                 result = self.connection.execute(query)
                 position += 1
     # end insert_last_search()
-    
-    # удалить пользователя ВКонтакте в базе данных
-    def del_vkuser(self, vk_id: int) -> bool:
-        pass
-    
-    # удалить контакт из списка поиска
-    def del_last_search_id(self, vk_id: int, lst_id: int) -> bool:
-        query = delete(self.last_search).where(
-            and_(
-                self.last_search.c.vk_id == vk_id,
-                self.last_search.c.lst_id == lst_id
-            )
-        )
-        result = self.connection.execute(query)
-        return True
-    # end del_last_search_id()
-    
-    # удалить контакт из заблокированных
-    def del_black_id(self, vk_id: int, blk_id: int) -> bool:
-        
-        query = delete(self.black_list).where(
-            and_(
-                self.black_list.c.vk_id == vk_id,
-                self.black_list.c.blk_id == blk_id
-            )
-        )
-        result = self.connection.execute(query)
-        return True
-    # end del_black_id()
-    
-    # сохранить в базе данных информацию об избранном контакте
-    def new_favorite(self, vk_id: int, fav_id: int) -> bool:
-        # проверяем , есть ли уже такой id в избранных
-        query = select([self.favorites]).where(
-            and_(
-                self.favorites.c.vk_id == vk_id,
-                self.favorites.c.fav_id == fav_id
-            )
-        )
-        
-        result = self.connection.execute(query).fetchone()
-                # если есть то записей в базу данных не делаем
-        if result is not None:
-            return False
-        
-        # если это новый id, то записываем его в базу данных
-        query = self.favorites.insert().values(
-            vk_id = vk_id,
-            fav_id = fav_id
-        )
-        result = self.connection.execute(query)
-        # удаляем id из списка поиска
-        self.del_last_search_id(vk_id, fav_id)
-        # удаляем id из черного списка
-        self.del_black_id(vk_id, fav_id)
-
-        return True
-    # end new_favorite()    
-    
-    # получить список избранных контактов
-    def get_favorites(self, vk_id : int) -> list:
-        query = select(self.favorites.c.fav_id).where(
-            self.favorites.c.vk_id == vk_id
-        )
-        result = self.connection.execute(query).fetchall()
-        # если записей нет, то возвращаем пустой список
-        if result is None or len(result) == 0:
-            return list()
-        # возвращаем список fav_id
-        return list(zip(*list(result)))[0]
-    # end get_favorites()
-    
-    # удалить избранный контакт у пользовалетя из базы данных
-    def del_favotite(self, vk_id: int, fav_id: int) -> bool:
-        query = delete(self.favorites).where(
-            and_(
-                self.favorites.c.vk_id == vk_id,
-                self.favorites.c.fav_id == fav_id
-            )
-        )
-        self.connection.execute(query)
-        return True
-    # end del_favorite()
-
-    # удалить все избранные контакты пользователя
-    def del_all_favorites(self, vk_id: int) -> bool:
-        
-        query = delete(self.favorites).where(
-            self.favorites.c.vk_id == vk_id,
-        )
-        self.connection.execute(query)
-        
-        return True
-    # end del_all_favorites()
-    
-    # получить список заблокированных контактов
-    def get_black_list(self, vk_id: int) -> list:
-        query = select(self.black_list.c.blk_id).where(
-            self.black_list.c.vk_id == vk_id
-        )
-        result = self.connection.execute(query).fetchall()
-        # если записей нет, то возвращаем пустой список
-        if result is None or len(result) == 0:
-            return list()
-        # разбиваем список из пары vk_id, fav_id и получаем list(fav_id)
-        return list(zip(*list(result)))[0]
-    # end get_black_list()
-    
-    # сохранить заблокированный контакт
-    def new_black_id(self, vk_id: int, blk_id: int) -> bool:
-    
-        # проверяем, есть ли уже такой id в блэк-листе
-        query = select([self.black_list]).where(
-            and_(
-                self.black_list.c.vk_id == vk_id,
-                self.black_list.c.blk_id == blk_id
-            )
-        )
-        
-        result = self.connection.execute(query).fetchone()
-        
-        # если есть то записей в базу данных не делаем
-        if result is not None:
-            return False
-        
-        # если это новый id, то записываем его в базу данных
-        query = self.black_list.insert().values(
-            vk_id = vk_id,
-            blk_id = blk_id
-        )
-        
-        result = self.connection.execute(query)
-        # удаляем id из списка поиска
-        self.del_last_search_id(vk_id, blk_id)
-        # удаляем id из списка фаворитов
-        self.del_favotite(vk_id, blk_id)
-        return True
-    # end new_black_id()
-    
-    # удалить контакт из списка поиска
-    def del_all_last_search(self, vk_id: int) -> bool:
-        query = delete(self.last_search).where(
-            self.last_search.c.vk_id == vk_id
-        )
-        result = self.connection.execute(query)
-        return True
-    # end del_all_last_search()
-    
-    # удалить весь "блэк лист" пользователя
-    def del_black_list(self, vk_id: int) -> bool:
-        query = delete(self.black_list).where(
-            self.black_list.c.vk_id == vk_id
-        )
-        result = self.connection.execute(query)
-        return True
-    # end del_black_list
-    
-    # проверка ID пользователя на включенеи в черный список
-    def is_black(self, vk_id: int, blk_id: int) -> bool:
-        query = select([self.black_list]).where(
-            and_(
-                self.black_list.c.vk_id == vk_id,
-                self.black_list.c.blk_id == blk_id
-            )
-        )
-        result = self.connection.execute(query).fetchone()
-        print(result)
-        if result is None:
-            return False
-        else:
-            return True
-    # end is_black()
-    
-    # считать дополнительные данные о пользователе из базы данных
-    def get_setings(self, vk_user: VKUserData) -> bool:
-        query = select([self.settings]).where(
-            self.settings.c.vk_id == vk_user.vk_id
-        )
-        result = self.connection.execute(query).fetchone()
-        # если запрос выполнился успешно
-        if result is None:
-            return False
-        # заполняем и возвращаем объект VKUserData
-        # нулевой элемент списка это vk_id из таблицы bd.search
-        vk_user.set_settings_from_list(list(result)[1:])
-        return True
-    # end get_settings()
-    
-    # получить из базы "наденного" по номеру смещения
-    def get_user(self, user_id, srch_number):
-        query = select(self.last_search.c.lst_id).where(
-            and_(
-                self.last_search.c.vk_id == user_id,
-                self.last_search.c.srch_number == srch_number
-            )
-        )
-        result = self.connection.execute(query).fetchone()
-        return result
-    # get_user()
-    
-    # сохранение дополнительных параметров пользователя в базе данных
-    def set_setings(self, vk_user: VKUserData) -> bool:
-        query = self.settings.insert().values(
-            vk_id = vk_user.vk_id,
-            access_token = vk_user.settings.access_token,
-            srch_offset = vk_user.settings.srch_offset,
-            age_from = vk_user.settings.age_from,
-            age_to = vk_user.settings.age_to,
-            last_command = vk_user.settings.last_command
-        )
-        self.connection.execute(query)
-        return True
-    # end set_settins()    
-    
-    # обновить данные параметров пользователя в базе данных
-    def upd_setings(self, vk_user: VKUserData) -> bool:
-
-        query = update(self.settings).where(
-            self.settings.c.vk_id == vk_user.vk_id
-        )
-        query = query.values(
-            srch_offset = vk_user.settings.srch_offset,            
-            access_token = vk_user.settings.access_token,
-            age_from = vk_user.settings.age_from,
-            age_to = vk_user.settings.age_to, 
-            last_command = vk_user.settings.last_command
-        )
-        self.connection.execute(query)
-        return True
-    # end upd_setings()
-    
