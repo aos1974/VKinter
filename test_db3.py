@@ -41,6 +41,10 @@ vk_db.del_last_search_id(vk_user.vk_id, 55500111)
 
 vk_db.new_favorite(vk_user.vk_id, 55500112)
 
+print(vk_db.get_favorites(24072898))
+
+vk_db.del_all_favorites(vk_user.vk_id)
+
 print('End')
 
 

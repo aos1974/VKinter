@@ -4,6 +4,7 @@
 # Работа с БД используя SQLAlchemy.ORM
 ###########################
 
+import re
 from sqlalchemy import Column, Integer, PrimaryKeyConstraint, String, and_, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -255,7 +256,7 @@ class DataBase(object):
                 black_list.blk_id == blk_id
             )
         )
-        dcc_black_id = query.first()
+        dcc_black_id = query.one()
         self.session.delete(dcc_black_id)
         self.session.commit()
         
@@ -292,4 +293,190 @@ class DataBase(object):
         return True
     # end new_favorite()        
 
+    # получить список избранных контактов
+    def get_favorites(self, vk_id : int) -> list:
+        
+        record = self.session.query(favorites.fav_id).filter(
+                favorites.vk_id == vk_id
+            ).all()
+        
+        # если записей нет, то возвращаем пустой список
+        if record is None or len(record) == 0:
+            return list()
+        # возвращаем список fav_id
+        return list(zip(*list(record)))[0]
+    # end get_favorites()    
+
+    # удалить избранный контакт у пользовалетя из базы данных
+    def del_favotite(self, vk_id: int, fav_id: int) -> bool:
+        
+        query = self.session.query(favorites)
+        query = query.filter(
+            and_(
+                favorites.vk_id == vk_id,
+                favorites.fav_id == fav_id
+            )
+        )
+        dcc_favorites_id = query.first()
+        self.session.delete(dcc_favorites_id)
+        self.session.commit()
     
+        return True
+    # end del_favorite()
+
+    # удалить все избранные контакты пользователя
+    def del_all_favorites(self, vk_id: int) -> bool:
+        
+        self.session.query(favorites).filter(favorites.vk_id == vk_id).delete(synchronize_session=False)
+        self.session.commit()
+        
+        return True
+    # end del_all_favorites()    
+
+    # получить список заблокированных контактов
+    def get_black_list(self, vk_id: int) -> list:
+        
+        record = self.session.query(black_list.blk_id).filter(black_list.vk_id == vk_id).all()
+        
+        # если записей нет, то возвращаем пустой список
+        if record is None or len(record) == 0:
+            return list()
+        # разбиваем список из пары vk_id, blk_id и получаем list(blk_id)
+        return list(zip(*list(record)))[0]
+    # end get_black_list()
+
+    # сохранить заблокированный контакт
+    def new_black_id(self, vk_id: int, blk_id: int) -> bool:
+    
+        # проверяем, есть ли уже такой id в блэк-листе
+        
+        record = self.session.query(black_list).filter(
+            and_(
+                black_list.vk_id == vk_id,
+                black_list.blk_id == blk_id
+            )
+        ).first()
+        
+        # если есть то записей в базу данных не делаем
+        if record is not None:
+            return False
+        
+        # если это новый id, то записываем его в базу данных
+        
+        cc_black_id = black_list(
+            vk_id = vk_id,
+            blk_id = blk_id
+        )
+        
+        self.session.add(cc_black_id)
+        self.session.commit()
+        
+        # удаляем id из списка поиска
+        self.del_last_search_id(vk_id, blk_id)
+        # удаляем id из списка фаворитов
+        self.del_favotite(vk_id, blk_id)
+        return True
+    # end new_black_id()    
+    
+    # удалить контакт из списка поиска
+    def del_all_last_search(self, vk_id: int) -> bool:
+        
+        self.session.query(last_search).filter(last_search.vk_id == vk_id).delete(synchronize_session=False)
+        self.session.commit()
+        
+        return True
+    # end del_all_last_search()
+    
+    # удалить весь "блэк лист" пользователя
+    def del_black_list(self, vk_id: int) -> bool:
+        
+        self.session.query(black_list).filter(black_list.vk_id == vk_id).delete(synchronize_session=False)
+        self.session.commit()
+        
+        return True
+    # end del_black_list
+    
+    # проверка ID пользователя на включенеи в черный список
+    def is_black(self, vk_id: int, blk_id: int) -> bool:
+        
+        result = self.session.query(black_list).filter(
+            and_(
+                black_list.vk_id == vk_id,
+                black_list.blk_id == blk_id
+            )
+        ).first()
+        
+        if result is None:
+            return False
+        else:
+            return True
+    # end is_black()
+
+    # считать дополнительные данные о пользователе из базы данных
+    def get_setings(self, vk_user: VKUserData) -> bool:
+        
+        result = self.session.query(settings).filter(
+            settings.vk_id == vk_user.vk_id
+            ).first()
+        
+        # если запрос выполнился успешно
+        if result is None:
+            return False
+        # заполняем и возвращаем объект VKUserData
+        vk_user.settings.access_token = result.access_token
+        vk_user.settings.srch_offset = result.srch_offset
+        vk_user.settings.age_from = result.age_from
+        vk_user.settings.age_to = result.age_to
+        vk_user.settings.last_command = result.last_command
+        
+        return True
+    # end get_settings()
+    
+    # получить из базы "наденного" по номеру смещения
+    def get_user(self, user_id, srch_number):
+        
+        result = self.session.query(last_search.lst_id).filter(
+            and_(
+                last_search.vk_id == user_id,
+                last_search.srch_number == srch_number
+            )
+        ).first()
+        return result
+    # get_user()    
+    
+    # сохранение дополнительных параметров пользователя в базе данных
+    def set_setings(self, vk_user: VKUserData) -> bool:
+
+        cc_settings = settings(
+            vk_id = vk_user.vk_id,
+            access_token = vk_user.settings.access_token,
+            srch_offset = vk_user.settings.srch_offset,
+            age_from = vk_user.settings.age_from,
+            age_to = vk_user.settings.age_to,
+            last_command = vk_user.settings.last_command
+        )        
+        
+        self.session.add(cc_settings)
+        self.session.commit()
+        return True
+    # end set_settins()      
+
+    # обновить данные параметров пользователя в базе данных
+    def upd_setings(self, vk_user: VKUserData) -> bool:
+
+        query = self.session.query(settings).filter(
+            settings.vk_id == vk_user.vk_id
+        )
+        
+        query.update({
+            settings.access_token : vk_user.settings.access_token,
+            settings.srch_offset : vk_user.settings.srch_offset,
+            settings.age_from : vk_user.settings.age_from,
+            settings.age_to : vk_user.settings.age_to,
+            settings.last_command : vk_user.settings.last_command}
+        )
+
+        self.session.commit()
+        return True
+    # end upd_setings()    
+

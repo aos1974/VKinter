@@ -330,7 +330,6 @@ class DataBase(object):
             )
         )
         result = self.connection.execute(query).fetchone()
-        print(result)
         if result is None:
             return False
         else:
